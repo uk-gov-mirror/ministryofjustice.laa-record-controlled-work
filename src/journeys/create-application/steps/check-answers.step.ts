@@ -16,8 +16,8 @@ import {
 } from "@ministryofjustice/hmpps-forge/govuk-components";
 
 import { CreateApplicationEffects } from "#/journeys/create-application/create-application.effects.js";
-import { submitButton } from "#/journeys/evidence/common.blocks.js";
 import { CONTEXT_DATA_KEYS } from "#/journeys/journey.constants.js";
+import { submitButton } from "#/journeys/shared.blocks.js";
 import { t } from "#/lib/i18n.js";
 
 const ecfLabel = match(Answer("ecf"))
