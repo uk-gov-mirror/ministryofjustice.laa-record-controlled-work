@@ -21,7 +21,7 @@ import { CONTEXT_DATA_KEYS } from "#/journeys/journey.constants.js";
 import { submitButton } from "#/journeys/shared.blocks.js";
 import { t } from "#/lib/i18n.js";
 
-const ecfLabel = match(Answer(AnswerKey.ECF))
+const ecfLabel = match(Answer(AnswerKey.ecf))
   .branch(Condition.Equals("yes"), t("common.yes"))
   .otherwise(t("common.no"));
 
