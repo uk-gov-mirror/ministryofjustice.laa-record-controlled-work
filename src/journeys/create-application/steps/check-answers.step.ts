@@ -15,12 +15,13 @@ import {
   GovUKSummaryList,
 } from "@ministryofjustice/hmpps-forge/govuk-components";
 
+import { AnswerKey } from "#/journeys/AnswerKey.enum.js";
 import { CreateApplicationEffects } from "#/journeys/create-application/create-application.effects.js";
 import { CONTEXT_DATA_KEYS } from "#/journeys/journey.constants.js";
 import { submitButton } from "#/journeys/shared.blocks.js";
 import { t } from "#/lib/i18n.js";
 
-const ecfLabel = match(Answer("ecf"))
+const ecfLabel = match(Answer(AnswerKey.ECF))
   .branch(Condition.Equals("yes"), t("common.yes"))
   .otherwise(t("common.no"));
 
