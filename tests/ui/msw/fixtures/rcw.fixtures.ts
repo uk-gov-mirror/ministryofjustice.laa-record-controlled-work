@@ -34,6 +34,8 @@ const MEANS_ASSESSMENT_APPLICATION_IDS: Record<
     "00000000-0000-4000-8000-000000000106",
   [MeansAssessmentScenarioName.HousingSharedOwnership]:
     "00000000-0000-4000-8000-000000000107",
+  [MeansAssessmentScenarioName.MeansAssessmentNotRequired]:
+    "00000000-0000-4000-8000-000000000116",
   [MeansAssessmentScenarioName.MissingEligibility]:
     "00000000-0000-4000-8000-000000000108",
   [MeansAssessmentScenarioName.OtherIncomeAndOutgoings]:
@@ -50,8 +52,6 @@ const MEANS_ASSESSMENT_APPLICATION_IDS: Record<
     "00000000-0000-4000-8000-000000000113",
   [MeansAssessmentScenarioName.Under18NoMeans]:
     "00000000-0000-4000-8000-000000000114",
-  [MeansAssessmentScenarioName.UnsupportedMeansAssessment]:
-    "00000000-0000-4000-8000-000000000116",
 };
 
 /**
@@ -99,6 +99,10 @@ export const meansAssessmentApplications = {
     meansAssessmentApplication(
       MeansAssessmentScenarioName.HousingSharedOwnership,
     ),
+  [MeansAssessmentScenarioName.MeansAssessmentNotRequired]:
+    meansAssessmentApplication(
+      MeansAssessmentScenarioName.MeansAssessmentNotRequired,
+    ),
   [MeansAssessmentScenarioName.MissingEligibility]: meansAssessmentApplication(
     MeansAssessmentScenarioName.MissingEligibility,
   ),
@@ -126,8 +130,4 @@ export const meansAssessmentApplications = {
   [MeansAssessmentScenarioName.Under18NoMeans]: meansAssessmentApplication(
     MeansAssessmentScenarioName.Under18NoMeans,
   ),
-  [MeansAssessmentScenarioName.UnsupportedMeansAssessment]:
-    meansAssessmentApplication(
-      MeansAssessmentScenarioName.UnsupportedMeansAssessment,
-    ),
 };
