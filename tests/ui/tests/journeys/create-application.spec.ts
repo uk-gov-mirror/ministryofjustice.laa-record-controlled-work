@@ -90,8 +90,24 @@ test("create application flow", async ({ withSelectedOffice: page }) => {
     }),
   ).toBeVisible();
 
-  // Select "Yes" and submit.
-  await page.getByRole("radio", { name: "Yes" }).check();
+  // Select "No" and submit.
+  await page.getByRole("radio", { name: "No" }).check();
+  await page.getByRole("button", { name: "Continue" }).click();
+
+  // Verify redirection to the Confirm Merits page.
+  await expect(page).toHaveURL("/cases/new/confirm-merits");
+  await expect(
+    page.getByRole("heading", {
+      name: "Confirm the case meets the merits criteria",
+      level: 1,
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", {
+      name: "Civil Legal Aid (Merits Criteria) Regulations (2013)",
+    }),
+  ).toHaveAttribute("href", "https://example.com");
+  await page.getByLabel("I confirm the case meets the criteria").check();
   await page.getByRole("button", { name: "Continue" }).click();
 
   // Verify redirection to the legal aid before page.
@@ -284,7 +300,7 @@ test("create application flow", async ({ withSelectedOffice: page }) => {
       // Family law classification
       "Public",
       // Letter from Local Authority
-      "Yes",
+      "No",
       // Accessed legal aid before
       "Yes, about the same matter",
       // Did your client get legal help for this matter in the last 6 months?
@@ -383,6 +399,8 @@ test("changing no fixed address to yes from check answers reaches address entry"
   await page.getByRole("radio", { name: "Public" }).check();
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("radio", { name: "No" }).check();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByLabel("I confirm the case meets the criteria").check();
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("radio", { name: "No" }).check();
   await page.getByRole("button", { name: "Continue" }).click();

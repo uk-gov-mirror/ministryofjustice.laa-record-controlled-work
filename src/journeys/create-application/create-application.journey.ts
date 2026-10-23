@@ -3,6 +3,7 @@ import { access, journey } from "@ministryofjustice/hmpps-forge/core/authoring";
 import { CreateApplicationEffects } from "#/journeys/create-application/create-application.effects.js";
 import { checkAnswersStep } from "#/journeys/create-application/steps/checkAnswers/checkAnswers.step.js";
 import { clientDetailsStep } from "#/journeys/create-application/steps/clientDetails/clientDetails.step.js";
+import { confirmMeritsStep } from "#/journeys/create-application/steps/confirmMerits/confirmMerits.step.js";
 import { declarationStep } from "#/journeys/create-application/steps/declaration/declaration.step.js";
 import { enterAddressManuallyStep } from "#/journeys/create-application/steps/enterAddressManually/enterAddressManually.step.js";
 import { enterOverseasAddressStep } from "#/journeys/create-application/steps/enterOverseasAddress/enterOverseasAddress.step.js";
@@ -42,6 +43,7 @@ export const createApplicationJourney = journey({
     needsProtectiveInjunctionStep(JourneyCode.CREATE_APPLICATION),
     laspoEvidenceScopeStep(JourneyCode.CREATE_APPLICATION),
     familyPrivateNotInScopeStep(JourneyCode.CREATE_APPLICATION),
+    confirmMeritsStep(JourneyCode.CREATE_APPLICATION),
     legalAidBeforeStep(JourneyCode.CREATE_APPLICATION),
     legalAidLast6MonthsStep(JourneyCode.CREATE_APPLICATION),
     letterFromLocalAuthorityStep(JourneyCode.CREATE_APPLICATION),

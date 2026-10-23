@@ -123,3 +123,26 @@ test("Edit Application - Client details journey", async ({
   );
 });
 
+test("Confirm Merits returns to Check Answers in the edit journey", async ({
+  withSelectedOffice: page,
+}) => {
+  const applicationId = createClientDetailsTestApplicationId();
+
+  await page.goto(
+    `/cases/${applicationId}/task-list/details/confirm-merits?returnTo=check-answers`,
+  );
+
+  await expect(
+    page.getByRole("heading", {
+      name: "Confirm the case meets the merits criteria",
+      level: 1,
+    }),
+  ).toBeVisible();
+
+  await page.getByLabel("I confirm the case meets the criteria").check();
+  await page.getByRole("button", { name: "Continue" }).click();
+
+  await expect(page).toHaveURL(
+    `/cases/${applicationId}/task-list/details/check-answers`,
+  );
+});

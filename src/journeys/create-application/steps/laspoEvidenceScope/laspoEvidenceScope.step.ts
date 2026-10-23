@@ -58,9 +58,8 @@ function saveLaspoEvidenceScope(journeyCode: string): SubmitHook {
     onValid: {
       effects: [CreateApplicationEffects.saveDraftAnswers(journeyCode)],
       next: [
-        redirectToNotInScope,
         redirectToCheckAnswers,
-        tempRedirectToLegalAidBefore,
+        redirectToNotInScope,
         redirectToConfirmMerits,
       ],
     },
@@ -74,16 +73,6 @@ function saveLaspoEvidenceScope(journeyCode: string): SubmitHook {
 const redirectToNotInScope = redirect({
   goto: "not-in-scope",
   when: Answer(AnswerKey.laspoEvidenceScope).match(Condition.Equals("none")),
-});
-
-/**
- * Redirects to the "Legal Aid Before" page while the next pages are being built.
- */
-const tempRedirectToLegalAidBefore = redirect({
-  goto: "legal-aid-before",
-  when: Answer(AnswerKey.laspoEvidenceScope).not.match(
-    Condition.Equals("none"),
-  ),
 });
 
 /**

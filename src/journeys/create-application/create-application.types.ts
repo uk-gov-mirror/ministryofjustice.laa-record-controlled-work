@@ -6,6 +6,7 @@ import type { JourneySession } from "#/journeys/context.type.js";
 import type { CONTEXT_DATA_KEYS } from "#/journeys/journey.constants.js";
 
 export interface CreateApplicationAnswers extends Record<string, unknown> {
+  [AnswerKey.confirmMerits]?: string;
   [AnswerKey.dateOfBirth]?: string;
   [AnswerKey.ecf]?: string;
   [AnswerKey.familyLawClassification]?: string;

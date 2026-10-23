@@ -64,11 +64,7 @@ function onSubmitNo(journeyCode: string): SubmitHook {
   return submit({
     onValid: {
       effects: [CreateApplicationEffects.saveDraftAnswers(journeyCode)],
-      next: [
-        redirectToCheckAnswers(),
-        tempRedirectToLegalAidBefore(),
-        redirectToConfirmMerits(),
-      ],
+      next: [redirectToCheckAnswers(), redirectToConfirmMerits()],
     },
     validate: true,
     when: Answer(AnswerKey.careProceedingsStarted).match(
@@ -88,7 +84,7 @@ function onSubmitYes(journeyCode: string): SubmitHook {
       effects: [CreateApplicationEffects.saveDraftAnswers(journeyCode)],
       next: [
         redirectToCheckAnswers(),
-        tempRedirectToLegalAidBefore(),
+        tempRedirectToConfirmMerits(),
         redirectToParentalResponsibility(),
       ],
     },
@@ -137,12 +133,12 @@ function redirectToParentalResponsibility(): RedirectOutcome {
 }
 
 /**
- * Temporary redirect to Legal Aid Before step.
+ * Temporary redirect to Confirm Merits step.
  * @todo Remove this and use the redirectToConfirmMerits and redirectToParentalResponsibility redirects when those steps are available.
  * @returns Redirect hook.
  */
-function tempRedirectToLegalAidBefore(): RedirectOutcome {
+function tempRedirectToConfirmMerits(): RedirectOutcome {
   return redirect({
-    goto: "legal-aid-before",
+    goto: "confirm-merits",
   });
 }

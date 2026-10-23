@@ -1,6 +1,7 @@
 export enum AnswerKey {
   careProceedingsParentalResponsibility = "careProceedingsParentalResponsibility",
   careProceedingsStarted = "careProceedingsStarted",
+  confirmMerits = "confirmMerits",
   dateOfBirth = "dateOfBirth",
   ecf = "ecf",
   familyLawClassification = "familyLawClassification",

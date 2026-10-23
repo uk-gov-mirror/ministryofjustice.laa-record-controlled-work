@@ -406,6 +406,14 @@
         },
         "button": "Finish and return to case list"
       },
+      "confirmMerits": {
+        "title": "Confirm the case meets the merits criteria",
+        "body": "All legal aid cases must meet the relevant merits criteria set out in the <a class=\"govuk-link\" href=\"https://example.com\">Civil Legal Aid (Merits Criteria) Regulations (2013)</a>.",
+        "checkboxLabel": "I confirm the case meets the criteria",
+        "validation": {
+          "required": "You must confirm the case meets the merits criteria"
+        }
+      },
       "legalAidBefore": {
         "title": "Has your client accessed legal aid before?",
         "radioButton": {

@@ -32,13 +32,22 @@ describe("LASPO Evidence Scope step", () => {
     });
 
     it("renders all radio options", () => {
-      const buttons = radioInput.properties.items as { text: string, value: string }[];
+      const buttons = radioInput.properties.items as {
+        text: string;
+        value: string;
+      }[];
       expect(buttons.length).to.equal(6); // counts the "or" row even though it is not a selectable option
       expect(buttons).to.deep.include.members([
-        { text: "Evidence of domestic abuse (Schedule 1)", value: "domesticAbuse" },
+        {
+          text: "Evidence of domestic abuse (Schedule 1)",
+          value: "domesticAbuse",
+        },
         { text: "Evidence of child abuse (Schedule 2)", value: "childAbuse" },
         { text: "Client is under 18 at time of signing", value: "under18" },
-        { text: "Client is a parent, person with parental responsibility, or prospective special guardian involved in a Special Guardianship Order application", value: "parentOrGuardian" },
+        {
+          text: "Client is a parent, person with parental responsibility, or prospective special guardian involved in a Special Guardianship Order application",
+          value: "parentOrGuardian",
+        },
         { text: "None of these", value: "none" },
       ]);
     });
@@ -56,7 +65,7 @@ describe("LASPO Evidence Scope step", () => {
       ).to.deep.equal("Select how can you prove this case is in scope");
     });
 
-    it("should redirect to legal aid before step if an option is selected", async () => {
+    it("redirects to Confirm Merits when an in-scope option is selected", async () => {
       const result = await client.post("/cases/new/prove-in-scope", {
         body: {
           laspoEvidenceScope: "domesticAbuse",
@@ -64,10 +73,10 @@ describe("LASPO Evidence Scope step", () => {
       });
       expect(result.type).to.equal("redirect");
       const redirectResult = result as TestRedirectResult;
-      expect(redirectResult.url).to.equal("/cases/new/legal-aid-before");
+      expect(redirectResult.url).to.equal("/cases/new/confirm-merits");
     });
 
-    it("should redirect to the private family drop out step if none is selected", async () => {
+    it("redirects to the private family drop out step if none is selected", async () => {
       const result = await client.post("/cases/new/prove-in-scope", {
         body: {
           laspoEvidenceScope: "none",
@@ -76,6 +85,20 @@ describe("LASPO Evidence Scope step", () => {
       expect(result.type).to.equal("redirect");
       const redirectResult = result as TestRedirectResult;
       expect(redirectResult.url).to.equal("/cases/new/not-in-scope");
+    });
+
+    it("returns to Check Answers when the answer is edited", async () => {
+      const result = await client.post("/cases/new/prove-in-scope", {
+        body: {
+          laspoEvidenceScope: "none",
+        },
+        query: { returnTo: "check-answers" },
+      });
+
+      expect(result.type).to.equal("redirect");
+      expect((result as TestRedirectResult).url).to.equal(
+        "/cases/new/check-answers",
+      );
     });
   });
 });

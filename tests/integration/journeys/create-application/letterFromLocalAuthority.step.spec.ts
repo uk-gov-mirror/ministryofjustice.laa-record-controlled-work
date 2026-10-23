@@ -73,9 +73,8 @@ describe("Letter from Local Authority step", () => {
       expect(result.url).to.equal("/cases/new/parental-responsibility");
     });
 
-    // TODO MEM-1055 Enable this test when adding the Confirm Merits step.
-    it.skip("redirects to Confirm Merits step when answer is 'No'", async () => {
-      const result = (await client.post("/cases/new/ecf", {
+    it("redirects to Confirm Merits when answer is 'No'", async () => {
+      const result = (await client.post(stepUrl, {
         body: {
           [AnswerKey.careProceedingsStarted]: "no",
         },

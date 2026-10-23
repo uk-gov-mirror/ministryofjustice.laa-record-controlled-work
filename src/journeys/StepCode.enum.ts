@@ -1,6 +1,7 @@
 export enum StepCode {
   CHECK_ANSWERS = "check-answers",
   CLIENT_DETAILS = "client-details",
+  CONFIRM_MERITS = "confirm-merits",
   ECF = "ecf",
   ECF_DROPOUT = "ecf-dropout",
   FAMILY_PRIVATE_NOT_IN_SCOPE = "not-in-scope",

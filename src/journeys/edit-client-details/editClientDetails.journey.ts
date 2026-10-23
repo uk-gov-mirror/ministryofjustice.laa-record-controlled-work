@@ -1,6 +1,7 @@
 import { access, journey } from "@ministryofjustice/hmpps-forge/core/authoring";
 
 import { clientDetailsStep } from "#/journeys/create-application/steps/clientDetails/clientDetails.step.js";
+import { confirmMeritsStep } from "#/journeys/create-application/steps/confirmMerits/confirmMerits.step.js";
 import { ecfStep } from "#/journeys/create-application/steps/ecf/ecf.step.js";
 import { ineligibleStep } from "#/journeys/create-application/steps/ecfDropout/ecfDropout.step.js";
 import { enterAddressManuallyStep } from "#/journeys/create-application/steps/enterAddressManually/enterAddressManually.step.js";
@@ -33,6 +34,7 @@ const stepsDirectlyEnterableWhileEditing = [
   needsProtectiveInjunctionStep(editJourneyCode),
   laspoEvidenceScopeStep(editJourneyCode),
   letterFromLocalAuthorityStep(editJourneyCode),
+  confirmMeritsStep(editJourneyCode),
   legalAidBeforeStep(editJourneyCode),
   legalAidLast6MonthsStep(editJourneyCode),
   clientDetailsStep(editJourneyCode),
