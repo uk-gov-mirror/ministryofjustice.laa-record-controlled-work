@@ -24,7 +24,7 @@ export const checkAnswersStep = (): ReturnType<typeof step> =>
     code: "check-answers",
     onSubmission: [
       submit({
-        onAlways: {
+        onValid: {
           effects: [evidenceEffects.updateEvidence("evidence")],
           next: [
             redirect({
@@ -35,7 +35,7 @@ export const checkAnswersStep = (): ReturnType<typeof step> =>
             }),
           ],
         },
-        validate: false,
+        validate: true,
       }),
     ],
     path: "check-answers",
