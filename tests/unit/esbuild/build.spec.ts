@@ -34,6 +34,23 @@ describe("esbuild build", function () {
     );
   });
 
+  it("should leave the Prometheus client external in the server bundle", async () => {
+    const result = await esbuild.build({
+      ...withoutSideEffects(appConfig()),
+      metafile: true,
+      write: false,
+    });
+
+    const serverOutput = result.metafile.outputs["public/app.js"];
+    assert.ok(
+      serverOutput.imports.some(
+        (dependency) =>
+          dependency.path === "@prometheus-io/client" && dependency.external,
+      ),
+      "Expected @prometheus-io/client to remain an external server dependency",
+    );
+  });
+
   it("should build SCSS with a content-hashed filename", async () => {
     const result = await esbuild.build({
       ...withoutSideEffects(scssConfig()),

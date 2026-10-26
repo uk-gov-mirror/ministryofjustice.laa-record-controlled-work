@@ -29,6 +29,7 @@ const externalModules: string[] = [
   "pino",
   "@sentry/node",
   "@sentry/profiling-node",
+  "@prometheus-io/client",
 ];
 
 export const appConfig = (watch = false): BuildOptions => ({
