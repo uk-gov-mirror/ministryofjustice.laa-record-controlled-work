@@ -1,3 +1,5 @@
+import type nunjucks from "nunjucks";
+
 import type { MeansAssessmentAnswerSummary } from "#/export/sections/meansAssessment/answers/answers.types.js";
 import type { MeansAssessmentCalculations } from "#/export/sections/meansAssessment/calculations/calculations.types.js";
 
@@ -41,11 +43,10 @@ export interface MeansAssessmentCalculationTable {
 }
 
 export interface MeansAssessmentCalculationTablePresentation {
-  caption: string;
+  caption: nunjucks.runtime.SafeString | string;
   captionClasses: string;
   classes: string;
   firstCellIsHeader: boolean;
-  hint: null | string;
   rows: MeansAssessmentCalculationCell[][];
 }
 

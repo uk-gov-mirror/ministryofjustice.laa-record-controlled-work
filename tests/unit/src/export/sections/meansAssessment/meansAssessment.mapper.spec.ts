@@ -108,8 +108,10 @@ describe("toMeansAssessmentSection", () => {
     )?.calculationBreakdowns.find((item) => item.heading === "Income calculation");
 
     expect(breakdown?.message).to.equal(null);
-    expect(breakdown?.tables.map((table) => table.caption)).to.deep.equal([
-      "Client's monthly income",
+    expect(
+      breakdown?.tables.map((table) => table.caption.toString()),
+    ).to.deep.equal([
+      "Client&#39;s monthly income<br><span class=\"govuk-hint govuk-!-margin-bottom-0\">All figures have been converted into a monthly amount.</span>",
       "Total",
     ]);
     expect(breakdown?.tables[0]?.firstCellIsHeader).to.equal(true);

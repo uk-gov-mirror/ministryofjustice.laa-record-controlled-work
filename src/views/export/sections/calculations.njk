@@ -9,9 +9,6 @@
     <p class="govuk-body">{{ breakdown.message }}</p>
   {% endif %}
   {% for table in breakdown.tables %}
-    {% if table.hint %}
-      <p class="govuk-body">{{ table.hint }}</p>
-    {% endif %}
     {{ govukTable(table) }}
   {% endfor %}
 {% endfor %}

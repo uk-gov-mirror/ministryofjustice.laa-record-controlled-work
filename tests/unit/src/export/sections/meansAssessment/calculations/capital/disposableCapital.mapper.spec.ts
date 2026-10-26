@@ -151,10 +151,12 @@ describe("toMeansAssessmentSection disposable capital calculation", () => {
       { partner: false },
     );
 
-    expect(capital?.tables.map(({ caption }) => caption)).to.deep.equal([
+    expect(
+      capital?.tables.map(({ caption }) => caption.toString()),
+    ).to.deep.equal([
       "Client's disposable capital",
       "Partner's disposable capital",
-      "60 or over disregard (also known as pensioner disregard)",
+      "60 or over disregard (also known as pensioner disregard)<br><span class=\"govuk-hint govuk-!-margin-bottom-0\">Applied to the total of the client and partner&#39;s disposable capital, and capped at £100,000.</span>",
       "Total",
     ]);
     expect(rowValues(capital!.tables[0]!)).to.deep.equal([

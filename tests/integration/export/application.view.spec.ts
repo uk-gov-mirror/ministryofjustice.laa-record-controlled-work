@@ -387,7 +387,29 @@ describe("export application view", () => {
   });
 
   it("renders income tables before saved answers with semantic row headers", async () => {
-    const response = await request(createViewApp()).get("/export");
+    const incomeBreakdown = {
+      ...meansAssessmentData.incomeBreakdown,
+      tables: [
+        ...meansAssessmentData.incomeBreakdown.tables,
+        {
+          heading: "Partner's monthly income",
+          hint: "All figures have been converted into a monthly amount.",
+          rows: [
+            { amount: "£250.00", heading: "Employment income", hint: null },
+          ],
+        },
+      ],
+    };
+    const response = await request(
+      createViewApp({
+        ...meansAssessment,
+        calculationBreakdowns: toCalculationBreakdowns([
+          incomeBreakdown,
+          meansAssessmentData.outgoingsBreakdown,
+          meansAssessmentData.capitalBreakdown,
+        ]),
+      }),
+    ).get("/export");
 
     expect(response.status).to.equal(200);
     expect(response.text).to.include("Income calculation");
@@ -395,6 +417,28 @@ describe("export application view", () => {
       "All figures have been converted into a monthly amount.",
     );
     expect(response.text).to.include("This does not include Housing Benefit");
+    const clientIncomeHeadingIndex = response.text.indexOf(
+      "Client&#39;s monthly income",
+    );
+    const clientIncomeHintIndex = response.text.indexOf(
+      "All figures have been converted into a monthly amount.",
+      clientIncomeHeadingIndex,
+    );
+    expect(clientIncomeHeadingIndex).to.be.lessThan(clientIncomeHintIndex);
+    expect(clientIncomeHintIndex).to.be.lessThan(
+      response.text.indexOf("Employment income", clientIncomeHintIndex),
+    );
+    const partnerIncomeHeadingIndex = response.text.indexOf(
+      "Partner&#39;s monthly income",
+    );
+    const partnerIncomeHintIndex = response.text.indexOf(
+      "All figures have been converted into a monthly amount.",
+      partnerIncomeHeadingIndex,
+    );
+    expect(partnerIncomeHeadingIndex).to.be.lessThan(partnerIncomeHintIndex);
+    expect(partnerIncomeHintIndex).to.be.lessThan(
+      response.text.indexOf("Employment income", partnerIncomeHintIndex),
+    );
     expect(response.text).to.match(
       /<th scope="row" class="govuk-table__header app-calculation__row-heading">\s*Employment income/,
     );
@@ -422,6 +466,17 @@ describe("export application view", () => {
     expect(response.text).to.include("Outgoings calculation");
     expect(response.text).to.include("Client&#39;s monthly outgoings");
     expect(response.text).to.include("Housing costs are capped at £545");
+    const outgoingsHeadingIndex = response.text.indexOf(
+      "Client&#39;s monthly outgoings",
+    );
+    const outgoingsHintIndex = response.text.indexOf(
+      "All figures have been converted into a monthly amount.",
+      outgoingsHeadingIndex,
+    );
+    expect(outgoingsHeadingIndex).to.be.lessThan(outgoingsHintIndex);
+    expect(outgoingsHintIndex).to.be.lessThan(
+      response.text.indexOf("Income tax", outgoingsHintIndex),
+    );
     expect(response.text).to.match(
       /<th scope="row" class="govuk-table__header app-calculation__row-heading">\s*Income tax/,
     );
@@ -515,20 +570,30 @@ describe("export application view", () => {
       calculationBreakdowns: toCalculationBreakdowns([{
         heading: unsafe,
         status: "ready",
-        tables: [{
-          heading: unsafe,
-          hint: unsafe,
-          rows: [{
-            additionalHint: `Additional ${unsafe}`,
-            amount: unsafe,
-            heading: `Heading ${unsafe}`,
-            hint: `Hint ${unsafe}`,
-          }, {
-            amount: "£0.00",
-            heading: `Plain ${unsafe}`,
+        tables: [
+          {
+            heading: unsafe,
+            hint: unsafe,
+            rows: [
+              {
+                additionalHint: `Additional ${unsafe}`,
+                amount: unsafe,
+                heading: `Heading ${unsafe}`,
+                hint: `Hint ${unsafe}`,
+              },
+              {
+                amount: "£0.00",
+                heading: `Plain ${unsafe}`,
+                hint: null,
+              },
+            ],
+          },
+          {
+            heading: `Caption ${unsafe}`,
             hint: null,
-          }],
-        }],
+            rows: [],
+          },
+        ],
       }]),
     })).get("/export");
 
@@ -538,6 +603,7 @@ describe("export application view", () => {
     expect(response.text).to.include(`Hint ${escaped}</span>`);
     expect(response.text).to.include(`Additional ${escaped}</span>`);
     expect(response.text).to.include(`Plain ${escaped}`);
+    expect(response.text).to.include(`Caption ${escaped}`);
     expect(response.text).not.to.include("&amp;lt;script&amp;gt;");
   });
 });

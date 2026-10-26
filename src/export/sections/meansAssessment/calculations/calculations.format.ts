@@ -1,8 +1,11 @@
+import nunjucks from "nunjucks";
+
 import type {
   MeansAssessmentCalculationBreakdown,
   MeansAssessmentCalculationCell,
   MeansAssessmentCalculationPresentation,
   MeansAssessmentCalculationRow,
+  MeansAssessmentCalculationTable,
 } from "#/export/sections/meansAssessment/meansAssessment.types.js";
 
 import { escapeHtml } from "#/export/export.helpers.js";
@@ -24,11 +27,10 @@ export function toCalculationBreakdowns(
             heading: breakdown.heading,
             message: breakdown.message ?? null,
             tables: breakdown.tables.map((table) => ({
-              caption: table.heading,
+              caption: toTableCaption(table),
               captionClasses: "govuk-table__caption--m",
               classes: "app-means-assessment__calculation-table",
               firstCellIsHeader: true,
-              hint: table.hint,
               rows: table.rows.map(toTableRow),
             })),
           },
@@ -48,6 +50,24 @@ export function toCalculationBreakdowns(
 
       return [];
     },
+  );
+}
+
+/**
+ * Prepares a table caption with its optional monthly hint.
+ * @param table Calculation table data.
+ * @returns Plain heading text or escaped caption markup for the GOV.UK table macro.
+ */
+function toTableCaption(
+  table: MeansAssessmentCalculationTable,
+): nunjucks.runtime.SafeString | string {
+  if (!table.hint) {
+    return table.heading;
+  }
+
+  const heading = escapeHtml(table.heading);
+  return new nunjucks.runtime.SafeString(
+    `${heading}<br><span class="govuk-hint govuk-!-margin-bottom-0">${escapeHtml(table.hint)}</span>`,
   );
 }
 

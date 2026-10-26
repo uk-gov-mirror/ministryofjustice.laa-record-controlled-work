@@ -830,6 +830,7 @@ test("renders saved capital calculation values from the export route", async ({
   });
   const partnerCapital = page.getByRole("table", {
     name: "Partner's disposable capital",
+    exact: true,
   });
   const pensionerCapital = page.getByRole("table", {
     name: "60 or over disregard (also known as pensioner disregard)",
