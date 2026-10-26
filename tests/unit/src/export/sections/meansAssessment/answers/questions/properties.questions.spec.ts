@@ -322,7 +322,7 @@ describe("saved additional property answers", () => {
     ).to.equal(false);
   });
 
-  it("shows client dispute annotations only when applicable", () => {
+  it("shows client dispute annotations for disputed properties", () => {
     const answers = {
       additional_property_owned: "outright",
       additional_properties: [
@@ -340,11 +340,16 @@ describe("saved additional property answers", () => {
       ],
     } satisfies Partial<EligibilityData>;
 
-    expect(
-      propertySummaries(answers)
-        .filter(({ heading }) => heading.includes("details"))
-        .map(({ rows }) => rows.map(({ key }) => key)),
-    ).to.deep.equal([
+    const summaries = propertySummaries(answers);
+    const detailSummaries = summaries.filter(({ heading }) =>
+      heading.includes("details"),
+    );
+    const detailRowsByProperty = detailSummaries.map(({ rows }) => rows);
+    const detailRowKeysByProperty = detailRowsByProperty.map((rows) =>
+      rows.map(({ key }) => key),
+    );
+
+    expect(detailRowKeysByProperty).to.deep.equal([
       [
         "How much is the property, holiday home or land worth?",
         "What percentage does your client own?",
@@ -356,10 +361,19 @@ describe("saved additional property answers", () => {
         "What percentage does your client own?",
       ],
     ]);
-    expect(
-      propertySummaries({ ...answers, immigration_or_asylum: true })
-        .filter(({ heading }) => heading.includes("details"))
-        .flatMap(({ rows }) => rows.map(({ key }) => key)),
-    ).not.to.include("Disputed asset");
+
+    const answersWithImmigration = {
+      ...answers,
+      immigration_or_asylum: true,
+    };
+    const summariesWithImmigration = propertySummaries(answersWithImmigration);
+    const detailSummariesWithImmigration = summariesWithImmigration.filter(
+      ({ heading }) => heading.includes("details"),
+    );
+    const detailRowKeysWithImmigration = detailSummariesWithImmigration.flatMap(
+      ({ rows }) => rows.map(({ key }) => key),
+    );
+
+    expect(detailRowKeysWithImmigration).not.to.include("Disputed asset");
   });
 });
