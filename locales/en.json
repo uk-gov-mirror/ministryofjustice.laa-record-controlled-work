@@ -49,7 +49,6 @@
           "disposableIncome": "Disposable monthly income",
           "capital": "Disposable capital",
           "notAvailable": "Not available",
-          "eligible": "Eligible",
           "contributionRequired": "Contribution required",
           "belowUpperLimit": "Below upper limit ({amount})",
           "exceedsUpperLimit": "Exceeds upper limit ({amount})",

@@ -31,6 +31,7 @@ export type MeansAssessmentCategory =
   | {
       noUpperThreshold: boolean;
       outcome: MeansAssessmentCategoryOutcome;
+      roundingThreshold: number;
       status: MeansAssessmentStatus.Calculated;
       total: null | number;
       upperThreshold: number;

@@ -30,6 +30,7 @@ import {
 import {
   createAsylumSupportScenario,
   createCalculationStatesScenario,
+  createKeyTotalsFormattingScenario,
   createMeansAssessmentNotRequiredScenario,
   createMissingEligibilityScenario,
   createPassportingScenario,
@@ -55,6 +56,7 @@ export enum MeansAssessmentScenarioName {
   IncomeBreakdownPartner = "incomeBreakdownPartner",
   IncomeBreakdownReady = "incomeBreakdownReady",
   IncomeBreakdownUnavailable = "incomeBreakdownUnavailable",
+  KeyTotalsFormatting = "keyTotalsFormatting",
   MeansAssessmentNotRequired = "meansAssessmentNotRequired",
   MissingEligibility = "missingEligibility",
   OtherIncomeAndOutgoings = "otherIncomeAndOutgoings",
@@ -99,6 +101,8 @@ export const meansAssessmentScenarios: Record<
     createIncomeCalculationScenario,
   [MeansAssessmentScenarioName.IncomeBreakdownUnavailable]:
     createUnavailableIncomeCalculationScenario,
+  [MeansAssessmentScenarioName.KeyTotalsFormatting]:
+    createKeyTotalsFormattingScenario,
   [MeansAssessmentScenarioName.MeansAssessmentNotRequired]:
     createMeansAssessmentNotRequiredScenario,
   [MeansAssessmentScenarioName.MissingEligibility]:

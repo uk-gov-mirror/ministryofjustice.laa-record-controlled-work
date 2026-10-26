@@ -24,6 +24,8 @@ const means = {
   t: fixedT("pages.export.meansAssessment"),
 };
 
+const KEY_TOTAL_PENCE_THRESHOLD_DISTANCE = 1;
+
 /**
  * Maps a saved means assessment to its export section without recalculating CFE values.
  * @param application Validated application returned by the RCW API.
@@ -78,6 +80,31 @@ export function toMeansAssessmentSection(
  */
 function formatCurrency(amount: number): string {
   return formatGBP(amount, true);
+}
+
+/**
+ * Preserves pence only within one pound of CCQ's minimum upper threshold.
+ * CCQ: laa-check-client-qualifies/app/models/calculation_result.rb#calculate_precision,
+ * called by CalculationResult#monetise_without_zeros_with_threshold.
+ * @param amount Saved CFE total.
+ * @param threshold Minimum saved upper threshold for the category.
+ * @returns The key total formatted with CCQ's display precision.
+ */
+function formatTotalCurrency(amount: number, threshold: number): string {
+  return Math.abs(amount - threshold) < KEY_TOTAL_PENCE_THRESHOLD_DISTANCE
+    ? formatCurrency(amount)
+    : formatWholePounds(amount);
+}
+
+/**
+ * Matches CCQ's whole-pound rounding, including negative half-pound amounts.
+ * CCQ: laa-check-client-qualifies/app/models/calculation_result.rb#monetise_without_zeros_with_threshold
+ * uses Rails number_to_currency with precision: 0, rounding halves away from zero.
+ * @param amount Saved CFE amount or threshold.
+ * @returns Rounded pounds sterling without pence.
+ */
+function formatWholePounds(amount: number): string {
+  return formatCurrency(Math.sign(amount) * Math.round(Math.abs(amount)));
 }
 
 /**
@@ -156,14 +183,10 @@ function toOutcomeKey(
 
 /**
  * Selects the detail text for a calculated total.
- * @param key Locale key for the total.
  * @param category Saved calculated category and threshold.
  * @returns The applicable detail text, or null when the total is unavailable.
  */
-function toTotalDetail(
-  key: "capital" | "disposableIncome" | "grossIncome",
-  category: MeansAssessmentCategory,
-): null | string {
+function toTotalDetail(category: MeansAssessmentCategory): null | string {
   if (
     category.status !== MeansAssessmentStatus.Calculated ||
     category.total === null
@@ -175,18 +198,15 @@ function toTotalDetail(
   }
   if (category.outcome === "ineligible") {
     return means.t("totals.exceedsUpperLimit", {
-      amount: formatCurrency(category.upperThreshold),
+      amount: formatWholePounds(category.upperThreshold),
     });
   }
   if (category.outcome === "contribution_required") {
     return means.t("totals.contributionRequired");
   }
-  if (key === "grossIncome") {
-    return means.t("totals.belowUpperLimit", {
-      amount: formatCurrency(category.upperThreshold),
-    });
-  }
-  return means.t("totals.eligible");
+  return means.t("totals.belowUpperLimit", {
+    amount: formatWholePounds(category.upperThreshold),
+  });
 }
 
 /**
@@ -241,11 +261,11 @@ function toTotalSummary(
   const amount =
     category.total === null
       ? means.t("totals.notAvailable")
-      : formatCurrency(category.total);
+      : formatTotalCurrency(category.total, category.roundingThreshold);
 
   return {
     amount,
-    detail: toTotalDetail(key, category),
+    detail: toTotalDetail(category),
     heading: means.t(`totals.${key}`),
   };
 }

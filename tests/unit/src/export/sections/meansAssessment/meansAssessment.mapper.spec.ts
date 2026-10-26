@@ -158,6 +158,7 @@ describe("toMeansAssessmentSection", () => {
       disposableIncome: {
         noUpperThreshold: false,
         outcome: "eligible",
+        roundingThreshold: 200,
         status: "calculated",
         total: 100,
         upperThreshold: 200,
@@ -165,6 +166,7 @@ describe("toMeansAssessmentSection", () => {
       grossIncome: {
         noUpperThreshold: false,
         outcome: "eligible",
+        roundingThreshold: 1_000,
         status: "calculated",
         total: null,
         upperThreshold: 1_000,
@@ -210,6 +212,7 @@ describe("toMeansAssessmentSection", () => {
       capital: {
         noUpperThreshold: true,
         outcome: "eligible",
+        roundingThreshold: 999_999_999_999,
         status: "calculated",
         total: 0,
         upperThreshold: 999_999_999_999,
@@ -218,6 +221,7 @@ describe("toMeansAssessmentSection", () => {
       disposableIncome: {
         noUpperThreshold: false,
         outcome: "eligible",
+        roundingThreshold: 0,
         status: "calculated",
         total: 0,
         upperThreshold: 0,
@@ -225,6 +229,7 @@ describe("toMeansAssessmentSection", () => {
       grossIncome: {
         noUpperThreshold: false,
         outcome: "eligible",
+        roundingThreshold: 1_000,
         status: "calculated",
         total: 999.99,
         upperThreshold: 1_000,
@@ -248,7 +253,7 @@ describe("toMeansAssessmentSection", () => {
         },
         {
           amount: "£0",
-          detail: "Eligible",
+          detail: "Below upper limit (£733)",
           heading: "Disposable monthly income",
         },
         {
@@ -258,6 +263,134 @@ describe("toMeansAssessmentSection", () => {
         },
       ],
     });
+  });
+
+  it("matches CCQ's controlled-work key totals without changing saved amounts", () => {
+    const section = mapScenario(
+      MeansAssessmentScenarioName.KeyTotalsFormatting,
+    );
+
+    expect(section?.outcomeSummary.totals?.items).to.deep.equal([
+      {
+        amount: "£50",
+        detail: "Below upper limit (£2,657)",
+        heading: "Gross monthly income",
+      },
+      {
+        amount: "-£1,052",
+        detail: "Below upper limit (£733)",
+        heading: "Disposable monthly income",
+      },
+      {
+        amount: "£2",
+        detail: "Below upper limit (£8,000)",
+        heading: "Disposable capital",
+      },
+    ]);
+    expect(section?.calculations).to.have.nested.property(
+      "grossIncome.total",
+      50.17,
+    );
+    expect(section?.calculations).to.have.nested.property(
+      "disposableIncome.total",
+      -1_051.8,
+    );
+  });
+
+  for (const { category, totalField } of [
+    {
+      category: "gross_income",
+      totalField: "combined_total_gross_income",
+    },
+    {
+      category: "disposable_income",
+      totalField: "combined_total_disposable_income",
+    },
+    {
+      category: "capital",
+      totalField: "combined_assessed_capital",
+    },
+  ]) {
+    it(`matches CCQ's threshold-sensitive precision for ${category}`, () => {
+      for (const { amount, expected } of [
+        { amount: 0, expected: "£0" },
+        { amount: 50.17, expected: "£50" },
+        { amount: 50.5, expected: "£51" },
+        { amount: 998.99, expected: "£999" },
+        { amount: 999, expected: "£999" },
+        { amount: 999.01, expected: "£999.01" },
+        { amount: 999.5, expected: "£999.50" },
+        { amount: 999.99, expected: "£999.99" },
+        { amount: 1_000, expected: "£1,000" },
+        { amount: 1_000.01, expected: "£1,000.01" },
+        { amount: 1_000.99, expected: "£1,000.99" },
+        { amount: 1_001, expected: "£1,001" },
+        { amount: 1_001.01, expected: "£1,001" },
+      ]) {
+        const section = mapSection({
+          result_summary: {
+            [category]: {
+              [totalField]: amount,
+              proceeding_types: [
+                { result: "eligible", upper_threshold: 1_000 },
+              ],
+            },
+            overall_result: { result: "eligible" },
+          },
+        });
+
+        expect(
+          section?.outcomeSummary.totals?.items[0].amount,
+          `${category}: ${amount}`,
+        ).to.equal(expected);
+      }
+    });
+
+    it(`keeps pence near the lowest ${category} limit but displays the first proceeding's limit`, () => {
+      const section = mapSection({
+        result_summary: {
+          [category]: {
+            [totalField]: 999.99,
+            proceeding_types: [
+              { result: "eligible", upper_threshold: 2_000.5 },
+              { result: "eligible", upper_threshold: 1_000 },
+            ],
+          },
+          overall_result: { result: "eligible" },
+        },
+      });
+
+      expect(section?.outcomeSummary.totals?.items[0]).to.include({
+        amount: "£999.99",
+        detail: "Below upper limit (£2,001)",
+      });
+    });
+  }
+
+  it("matches CCQ's negative-income rounding without displaying negative zero", () => {
+    for (const { amount, expected } of [
+      { amount: -1_051.8, expected: "-£1,052" },
+      { amount: -1_051.5, expected: "-£1,052" },
+      { amount: -0.5, expected: "-£1" },
+      { amount: -0.49, expected: "£0" },
+      { amount: -0.01, expected: "£0" },
+      { amount: -0, expected: "£0" },
+    ]) {
+      const section = mapSection({
+        result_summary: {
+          disposable_income: {
+            combined_total_disposable_income: amount,
+            proceeding_types: [{ result: "eligible", upper_threshold: 733 }],
+          },
+          overall_result: { result: "eligible" },
+        },
+      });
+
+      expect(
+        section?.outcomeSummary.totals?.items[0].amount,
+        String(amount),
+      ).to.equal(expected);
+    }
   });
 
   it("omits uncalculated totals and keeps saved null totals unavailable", () => {
@@ -381,7 +514,7 @@ describe("toMeansAssessmentSection", () => {
           },
           {
             amount: "£0",
-            detail: "Eligible",
+            detail: "Below upper limit (£0)",
             heading: "Disposable monthly income",
           },
           {

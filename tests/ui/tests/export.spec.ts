@@ -11,6 +11,11 @@ import {
 const ELIGIBLE_OUTCOME =
   "Your client is financially eligible for controlled work and family mediation.";
 const UNAVAILABLE_OUTCOME = "Financial eligibility outcome unavailable.";
+const FORMATTED_KEY_TOTALS = [
+  "Gross monthly income £50 Below upper limit (£2,657)",
+  "Disposable monthly income -£1,052 Below upper limit (£733)",
+  "Disposable capital £2 Below upper limit (£8,000)",
+];
 
 interface RenderedScenarioExpectation {
   answerSummaries: boolean;
@@ -35,7 +40,7 @@ const RENDERED_SCENARIOS: RenderedScenarioExpectation[] = [
     section: true,
     totals: [
       "Gross monthly income £0 Below upper limit (£2,657)",
-      "Disposable monthly income £0 Eligible",
+      "Disposable monthly income £0 Below upper limit (£733)",
       "Disposable capital £0 No upper limit applies",
     ],
   },
@@ -56,7 +61,7 @@ const RENDERED_SCENARIOS: RenderedScenarioExpectation[] = [
     section: true,
     totals: [
       "Gross monthly income £0 Below upper limit (£2,657)",
-      "Disposable monthly income £0 Eligible",
+      "Disposable monthly income £0 Below upper limit (£733)",
       "Disposable capital £0 No upper limit applies",
     ],
   },
@@ -67,7 +72,7 @@ const RENDERED_SCENARIOS: RenderedScenarioExpectation[] = [
     section: true,
     totals: [
       "Gross monthly income £0 Below upper limit (£2,657)",
-      "Disposable monthly income £0 Eligible",
+      "Disposable monthly income £0 Below upper limit (£733)",
       "Disposable capital £0 No upper limit applies",
     ],
   },
@@ -78,7 +83,7 @@ const RENDERED_SCENARIOS: RenderedScenarioExpectation[] = [
     section: true,
     totals: [
       "Gross monthly income £0 Below upper limit (£2,657)",
-      "Disposable monthly income £0 Eligible",
+      "Disposable monthly income £0 Below upper limit (£733)",
       "Disposable capital £0 No upper limit applies",
     ],
   },
@@ -89,9 +94,16 @@ const RENDERED_SCENARIOS: RenderedScenarioExpectation[] = [
     section: true,
     totals: [
       "Gross monthly income £0 Below upper limit (£2,657)",
-      "Disposable monthly income £0 Eligible",
+      "Disposable monthly income £0 Below upper limit (£733)",
       "Disposable capital £0 No upper limit applies",
     ],
+  },
+  {
+    answerSummaries: true,
+    outcome: ELIGIBLE_OUTCOME,
+    scenario: MeansAssessmentScenarioName.KeyTotalsFormatting,
+    section: true,
+    totals: FORMATTED_KEY_TOTALS,
   },
   {
     answerSummaries: false,
@@ -107,7 +119,7 @@ const RENDERED_SCENARIOS: RenderedScenarioExpectation[] = [
     section: true,
     totals: [
       "Gross monthly income £0 Below upper limit (£2,657)",
-      "Disposable monthly income £0 Eligible",
+      "Disposable monthly income £0 Below upper limit (£733)",
       "Disposable capital £0 No upper limit applies",
     ],
   },
@@ -125,7 +137,7 @@ const RENDERED_SCENARIOS: RenderedScenarioExpectation[] = [
     section: true,
     totals: [
       "Gross monthly income £0 Below upper limit (£2,657)",
-      "Disposable monthly income £0 Eligible",
+      "Disposable monthly income £0 Below upper limit (£733)",
       "Disposable capital £0 No upper limit applies",
     ],
   },
@@ -136,7 +148,7 @@ const RENDERED_SCENARIOS: RenderedScenarioExpectation[] = [
     section: true,
     totals: [
       "Gross monthly income £0 Below upper limit (£2,657)",
-      "Disposable monthly income £0 Eligible",
+      "Disposable monthly income £0 Below upper limit (£733)",
       "Disposable capital £0 No upper limit applies",
     ],
   },
@@ -319,6 +331,23 @@ test("export page renders mapped means outcomes, totals, and answer cards", asyn
   await expect(
     page.locator(".app-means-assessment .govuk-summary-list__row").first(),
   ).toContainText("18 to 59");
+});
+
+test("prints CCQ-aligned key totals and thresholds", async ({
+  withSelectedOffice: page,
+}) => {
+  const application =
+    meansAssessmentApplications[
+      MeansAssessmentScenarioName.KeyTotalsFormatting
+    ];
+  const response = await page.goto(`/cases/${application.id}/export`);
+  const totals = page.locator(".app-means-assessment__total");
+
+  expect(response?.ok()).toBe(true);
+  await expect(totals).toHaveText(FORMATTED_KEY_TOTALS);
+  for (const total of await totals.all()) {
+    await expect(total).toBeVisible();
+  }
 });
 
 for (const expected of RENDERED_SCENARIOS) {
@@ -652,7 +681,7 @@ test("preserves key totals when income details are incompatible", async ({
   );
   await expect(
     meansAssessment.locator(".app-means-assessment__total").first(),
-  ).toContainText("£102.03");
+  ).toHaveText("Gross monthly income £102 Below upper limit (£2,500)");
   await expect(
     meansAssessment.locator("table.app-means-assessment__calculation-table"),
   ).toHaveCount(0);

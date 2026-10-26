@@ -9,7 +9,10 @@ import type {
 
 import { ClientAgeRange } from "#/api/eligibility/eligibility.types.js";
 import { CFE_MAX_VALUE } from "#/export/sections/meansAssessment/calculations/calculations.constants.js";
-import { floorCombinedAssessedCapital } from "#/export/sections/meansAssessment/calculations/calculations.helpers.js";
+import {
+  floorCombinedAssessedCapital,
+  toMinimumUpperThreshold,
+} from "#/export/sections/meansAssessment/calculations/calculations.helpers.js";
 import {
   MeansAssessmentStatus,
   MeansAssessmentTotalField,
@@ -20,8 +23,6 @@ import {
   cfeResultSchema,
   type CfeResultSummary,
 } from "#/export/sections/meansAssessment/calculations/calculations.zod.js";
-
-const NO_CFE_PROCEEDING_TYPES = 0;
 
 /**
  * Maps the saved CFE outcome and calculation totals.
@@ -187,6 +188,7 @@ function toCategory(
     // CCQ upperThreshold comparison: laa-check-client-qualifies/app/models/calculation_result.rb:39.
     noUpperThreshold: proceeding.upperThreshold === CFE_MAX_VALUE,
     outcome: proceeding.outcome,
+    roundingThreshold: proceeding.roundingThreshold,
     status: MeansAssessmentStatus.Calculated,
     total: mappedTotal,
     upperThreshold: proceeding.upperThreshold,
@@ -202,12 +204,16 @@ function toCategoryProceeding(
   proceedingTypes: CfeCategory["proceeding_types"],
 ): null | {
   outcome: MeansAssessmentCategoryOutcome;
+  roundingThreshold: number;
   upperThreshold: number;
 } {
+  if (proceedingTypes === undefined || proceedingTypes === null) {
+    return null;
+  }
+
+  const roundingThreshold = toMinimumUpperThreshold(proceedingTypes);
   if (
-    proceedingTypes === undefined ||
-    proceedingTypes === null ||
-    proceedingTypes.length === NO_CFE_PROCEEDING_TYPES ||
+    roundingThreshold === null ||
     // Match CCQ's any-calculated-result check in laa-check-client-qualifies/app/models/cfe_result.rb:31.
     !proceedingTypes.some(
       ({ result }) => result !== CfeOutcomes.enum.not_calculated,
@@ -225,6 +231,7 @@ function toCategoryProceeding(
 
   return {
     outcome,
+    roundingThreshold,
     upperThreshold: firstProceedingType.upper_threshold,
   };
 }

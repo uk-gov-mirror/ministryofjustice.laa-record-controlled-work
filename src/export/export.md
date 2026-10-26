@@ -31,6 +31,8 @@ Question selectors may return `null` or `undefined` when an answer is absent. Fo
 
 Expected mapper states use synthetic fixtures: `meansAssessmentRequired: false` returns no section even if stored answers/results say passported and eligible; a supported `eligible` or `contribution_required` result with a valid calculated category is ready, while missing, malformed, unknown, or overall-ineligible results are unavailable. An eligible result with no calculation categories is ready only when saved answers indicate passporting, asylum support with immigration/asylum, or the controlled-work under-18 no-means-test route (`passporting`, `immigration_or_asylum`, `asylum_support`, `client_age`, `controlled_legal_representation`, `aggregated_means`, `regular_income`, and `under_eighteen_assets`); its categories remain `not_calculated`. Zero and pence values are copied unchanged, and ordinary assessments with no calculated categories are unavailable.
 
+Key eligibility totals use CCQ's display rules: eligible controlled-work categories show their saved upper limit rather than a generic "Eligible" label. Amounts are rounded to whole pounds unless they are within one pound of the category's minimum saved upper threshold, when non-zero pence are retained. Half-pound amounts round away from zero, including negative disposable income. Limit labels use the first proceeding's threshold rounded to whole pounds. Unlimited limits and contribution outcomes keep their existing wording. This formatting does not change saved totals, detailed calculation tables, answer summaries, or contribution amounts.
+
 ## Means assessment modules
 
 - `meansAssessment.mapper.ts` assembles the section and handles explicit omission.

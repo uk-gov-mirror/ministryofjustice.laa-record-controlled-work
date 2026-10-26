@@ -48,6 +48,8 @@ const MEANS_ASSESSMENT_APPLICATION_IDS: Record<
     "00000000-0000-4000-8000-000000000117",
   [MeansAssessmentScenarioName.IncomeBreakdownUnavailable]:
     "00000000-0000-4000-8000-000000000119",
+  [MeansAssessmentScenarioName.KeyTotalsFormatting]:
+    "00000000-0000-4000-8000-000000000128",
   [MeansAssessmentScenarioName.MeansAssessmentNotRequired]:
     "00000000-0000-4000-8000-000000000116",
   [MeansAssessmentScenarioName.MissingEligibility]:

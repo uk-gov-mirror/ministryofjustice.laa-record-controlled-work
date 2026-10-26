@@ -33,6 +33,37 @@ export function createCalculationStatesScenario(): MeansAssessmentScenario {
   );
 }
 
+export function createKeyTotalsFormattingScenario(): MeansAssessmentScenario {
+  return createMeansAssessment(
+    {},
+    {
+      result_summary: {
+        capital: {
+          combined_assessed_capital: 2,
+          proceeding_types: [
+            {
+              lower_threshold: 8_000,
+              result: "eligible",
+              upper_threshold: 8_000,
+            },
+          ],
+        },
+        disposable_income: {
+          combined_total_disposable_income: -1_051.8,
+          proceeding_types: [
+            { lower_threshold: 733, result: "eligible", upper_threshold: 733 },
+          ],
+        },
+        gross_income: {
+          combined_total_gross_income: 50.17,
+          proceeding_types: [{ result: "eligible", upper_threshold: 2_657 }],
+        },
+        overall_result: { result: "eligible" },
+      },
+    },
+  );
+}
+
 export function createMeansAssessmentNotRequiredScenario(): MeansAssessmentScenario {
   return { ...createMeansAssessment(), meansAssessmentRequired: false };
 }
