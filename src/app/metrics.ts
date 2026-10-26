@@ -5,7 +5,7 @@ import {
   Counter,
   Histogram,
   Registry,
-} from "prom-client";
+} from "@prometheus-io/client";
 
 const NANOSECONDS_PER_SECOND = 1e9;
 

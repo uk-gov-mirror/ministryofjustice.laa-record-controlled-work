@@ -51,6 +51,7 @@
     "@azure/msal-node": "^6.0.1",
     "@ministryofjustice/frontend": "11.1.0",
     "@ministryofjustice/hmpps-forge": "^0.4.4",
+    "@prometheus-io/client": "^0.16.1",
     "@sentry/browser": "^10.76.2",
     "@sentry/node": "^10.76.2",
     "accessible-autocomplete": "^3.0.2",
@@ -70,7 +71,6 @@
     "nunjucks": "^3.2.4",
     "path-to-regexp": "^8.4.2",
     "pino": "^10.4.0",
-    "prom-client": "^15.1.3",
     "redis": "^6.3.0",
     "zod": "^4.6.7"
   },
