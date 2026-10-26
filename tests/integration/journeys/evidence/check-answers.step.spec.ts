@@ -8,6 +8,7 @@ import { createEvidenceJourneyTestClient } from "../../utils/helpers.js";
 import { RenderBlock } from "@ministryofjustice/hmpps-forge/core/framework";
 
 describe("Check answers step", () => {
+  
   const applicationId = "123e4567-e89b-12d3-a456-426614174000";
   const updateApplicationEvidenceStub = sinon.stub().resolves({
     status: 204,
@@ -22,6 +23,8 @@ describe("Check answers step", () => {
       [`evidence:${applicationId}`]: {
         doYouHaveEvidence: "yes",
         employedEvidence: ["wageSlips"],
+        haveEvidenceOfExpenditure: "yes",
+        haveEvidenceOfCapital: "yes",
         selfEmployedEvidence: [],
         benefitsInKindEvidence: [],
         otherEvidence: [],
