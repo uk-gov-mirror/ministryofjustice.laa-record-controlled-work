@@ -28,6 +28,7 @@ export const CONTEXT_DATA_KEYS = {
   caseList: "caseList",
   clientDetailsStatus: "clientDetailsStatus",
   declarationStatus: "declarationStatus",
+  evidenceAnswersComplete: "evidenceAnswersComplete",
   evidenceStatus: "evidenceStatus",
   meansAssessment: "meansAssessment",
   readyForSubmission: "readyForSubmission",

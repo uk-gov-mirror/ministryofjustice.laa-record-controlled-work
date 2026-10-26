@@ -6,6 +6,7 @@ import { expect } from "chai";
 import sinon from "sinon";
 import { createEvidenceJourneyTestClient } from "../../utils/helpers.js";
 import { RenderBlock } from "@ministryofjustice/hmpps-forge/core/framework";
+import { getGetApplicationResponseMock } from "#orval/mocks/rcw/fakers/applications/applications.faker.gen.js";
 
 describe("Check answers step", () => {
   const applicationId = "123e4567-e89b-12d3-a456-426614174000";
@@ -21,6 +22,8 @@ describe("Check answers step", () => {
     journeyDrafts: {
       [`evidence:${applicationId}`]: {
         doYouHaveEvidence: "yes",
+        haveEvidenceOfExpenditure: "yes",
+        haveEvidenceOfCapital: "yes",
         employedEvidence: ["wageSlips"],
         selfEmployedEvidence: [],
         benefitsInKindEvidence: [],
@@ -94,9 +97,147 @@ describe("Check answers step", () => {
     it("renders the submit button", () => {
       expect(submitButton.properties.text).to.equal("Save and continue");
     });
+
+    describe("reachability", () => {
+      const evidenceDraft = (answers: Record<string, unknown>) => ({
+        journeyDrafts: { [`evidence:${applicationId}`]: answers },
+      });
+      const checkAnswersUrl = `/cases/${applicationId}/evidence/check-answers`;
+      const firstStepUrl = `/cases/${applicationId}/evidence/have-evidence`;
+
+      const expectRedirectToFirstStep = async (
+        session: Record<string, unknown>,
+      ) => {
+        const result = await client.get(checkAnswersUrl, { session });
+        expect(result.type).to.equal("redirect");
+        expect((result as TestRedirectResult).url).to.equal(firstStepUrl);
+      };
+
+      it("redirects to the first step when no evidence answers are stored", async () => {
+        await expectRedirectToFirstStep({});
+      });
+
+      it("redirects to the first step when 'no' is stored without a reason", async () => {
+        await expectRedirectToFirstStep(
+          evidenceDraft({ doYouHaveEvidence: "no" }),
+        );
+      });
+
+      it("redirects to the first step when 'yes' is stored without income evidence", async () => {
+        await expectRedirectToFirstStep(
+          evidenceDraft({ doYouHaveEvidence: "yes" }),
+        );
+      });
+
+      it("redirects to the first step when expenditure is 'yes' without any expenditure evidence", async () => {
+        await expectRedirectToFirstStep(
+          evidenceDraft({
+            doYouHaveEvidence: "yes",
+            employedEvidence: ["wageSlips"],
+            haveEvidenceOfExpenditure: "yes",
+          }),
+        );
+      });
+
+      it("redirects to the first step when capital is 'yes' without any capital evidence", async () => {
+        await expectRedirectToFirstStep(
+          evidenceDraft({
+            doYouHaveEvidence: "yes",
+            employedEvidence: ["wageSlips"],
+            haveEvidenceOfCapital: "yes",
+            haveEvidenceOfExpenditure: "no",
+          }),
+        );
+      });
+
+      it("renders when 'no' is stored with a reason and more details", async () => {
+        const result = await client.get(checkAnswersUrl, {
+          session: evidenceDraft({
+            doYouHaveEvidence: "no",
+            moreDetailsForNoEvidence: "Client was unable to get documents",
+            reasonForNoEvidence: "notPossibleBeforeStart",
+          }),
+        });
+        expect(result.type).to.equal("render");
+      });
+
+      it("renders when every evidence section is answered as 'no' after income", async () => {
+        const result = await client.get(checkAnswersUrl, {
+          session: evidenceDraft({
+            doYouHaveEvidence: "yes",
+            employedEvidence: ["wageSlips"],
+            haveEvidenceOfCapital: "no",
+            haveEvidenceOfExpenditure: "no",
+          }),
+        });
+        expect(result.type).to.equal("render");
+      });
+
+      it("renders when complete evidence is already saved on the application", async () => {
+        const savedEvidenceClient = createEvidenceJourneyTestClient({
+          getApplication: sinon.stub().resolves({
+            data: getGetApplicationResponseMock({
+              evidence: {
+                evidenceExemptionCode: "adviceOverPhone",
+                evidenceExemptionReason: "Advice was given over the phone",
+                expenditureCapitalEvidenceChecklist: null,
+                incomeEvidenceChecklist: null,
+              },
+            }),
+            status: 200,
+          }),
+        });
+
+        const result = await savedEvidenceClient.get(checkAnswersUrl, {
+          session: {},
+        });
+        expect(result.type).to.equal("render");
+      });
+
+      it("renders when saved evidence has income, expenditure and capital evidence", async () => {
+        const savedEvidenceClient = createEvidenceJourneyTestClient({
+          getApplication: sinon.stub().resolves({
+            data: getGetApplicationResponseMock({
+              evidence: {
+                evidenceExemptionCode: "none",
+                evidenceExemptionReason: null,
+                expenditureCapitalEvidenceChecklist: {
+                  capitalEvidence: { bankStatementCapital: "bankStatementCapital" },
+                  childCareEvidence: {},
+                  housingCostsEvidence: { rentAgreement: "rentAgreement" },
+                  incomeEvidence: {},
+                  maintenanceEvidence: {},
+                },
+                incomeEvidenceChecklist: {
+                  employedEvidence: { wageSlips: "wageSlips" },
+                },
+              },
+            }),
+            status: 200,
+          }),
+        });
+
+        const result = await savedEvidenceClient.get(checkAnswersUrl, {
+          session: {},
+        });
+        expect(result.type).to.equal("render");
+      });
+    });
   });
 
   describe("POST /cases/evidence/check-answers", () => {
+    it("redirects to the first step when evidence answers are incomplete", async () => {
+      const result = await client.post(
+        `/cases/${applicationId}/evidence/check-answers`,
+        { session: {} },
+      );
+      expect(result.type).to.equal("redirect");
+      expect((result as TestRedirectResult).url).to.equal(
+        `/cases/${applicationId}/evidence/have-evidence`,
+      );
+      expect(updateApplicationEvidenceStub.called).to.equal(false);
+    });
+
     it("redirects to the confirmation step", async () => {
       const result = await client.post(
         `/cases/${applicationId}/evidence/check-answers`,

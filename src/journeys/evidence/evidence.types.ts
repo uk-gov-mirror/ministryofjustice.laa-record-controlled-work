@@ -3,6 +3,7 @@ import type { EffectFunctionContext } from "@ministryofjustice/hmpps-forge/core"
 import type { updateApplicationEvidence } from "#/api/clients/rcw/schema/applications/applications.gen.js";
 import type { JourneySession } from "#/journeys/context.type.js";
 import type { EditApplicationData } from "#/journeys/edit-application/editApplication.types.js";
+import type { CONTEXT_DATA_KEYS } from "#/journeys/journey.constants.js";
 
 export interface EvidenceAnswers extends Record<string, unknown> {
   asylumSupportEvidence?: string[];
@@ -30,7 +31,9 @@ export type EvidenceContext = EffectFunctionContext<
   JourneySession
 >;
 
-export interface EvidenceData extends EditApplicationData {}
+export interface EvidenceData extends EditApplicationData {
+  [CONTEXT_DATA_KEYS.evidenceAnswersComplete]?: boolean;
+}
 
 export interface EvidenceEffectsDeps {
   updateApplicationEvidence: typeof updateApplicationEvidence;
