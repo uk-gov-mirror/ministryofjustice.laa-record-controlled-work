@@ -36,6 +36,7 @@ describe("Check answers step", () => {
         needsAdviceOnEUOrInternationalMaintenance: "no",
         needsProtectiveInjunction: "no",
         laspoEvidenceScope: "domesticAbuse",
+        confirmMerits: "yes",
         reasonForHelp: "Some reason for help",
         reasonForYes: "Some reason for help",
         firstName: "John",
@@ -87,7 +88,7 @@ describe("Check answers step", () => {
         value: row.value.text,
       }));
 
-      expect(rows.length).to.equal(15);
+      expect(rows.length).to.equal(16);
       expect(rows).to.deep.include.members([
         { key: "ECF", value: "No" },
         { key: "Type of family law", value: "Private" },
@@ -97,6 +98,7 @@ describe("Check answers step", () => {
         },
         { key: "Legal aid to get a protective injunction order", value: "No" },
         { key: "Evidence case is in scope", value: "Evidence of domestic abuse (Schedule 1)" },
+        { key: "Client merits", value: "Yes" },
         {
           key: "Accessed legal aid before",
           value: "Yes, about the same matter",
@@ -116,6 +118,20 @@ describe("Check answers step", () => {
         { key: "Has a home address", value: "Yes" },
         { key: "Address", value: undefined },
       ]);
+    });
+
+    it("links the Client merits row to the confirmation step", () => {
+      const rows = summaryList.properties.rows as Array<{
+        actions?: { items: Array<{ href: string }> };
+        key: { text: string };
+      }>;
+      const confirmMeritsRow = rows.find(
+        (row) => row.key.text === "Client merits",
+      );
+
+      expect(confirmMeritsRow?.actions?.items[0].href).to.equal(
+        "confirm-merits?returnTo=check-answers",
+      );
     });
 
     it("links the home address row to the home address question", () => {

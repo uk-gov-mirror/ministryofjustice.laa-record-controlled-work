@@ -20,6 +20,7 @@ import { AnswerKey } from "#/journeys/AnswerKey.enum.js";
 import {
   formatAddressValue,
   formatChangeAddressRedirect,
+  formatConfirmMeritsLabel,
   formatDateOfBirth,
   formatEcfLabel,
   formatFamilyLawClassificationLabel,
@@ -138,6 +139,12 @@ function createSummaryList(
       href: "prove-in-scope?returnTo=check-answers",
       label: answerLabelT("laspoEvidenceScope"),
       value: { text: formatLaspoEvidenceScopeLabel() },
+    },
+    {
+      field: AnswerKey.confirmMerits,
+      href: "confirm-merits?returnTo=check-answers",
+      label: answerLabelT("confirmMerits"),
+      value: { text: formatConfirmMeritsLabel() },
     },
     {
       field: AnswerKey.legalAidBefore,

@@ -126,20 +126,27 @@ describe("Confirm Merits step", () => {
     });
 
     it("saves a valid answer and redirects to Legal Aid Before", async () => {
+      const session: {
+        journeyDrafts?: Record<string, Record<string, unknown>>;
+      } = {};
       const result = await client.post(stepUrl, {
         body: {
-          [AnswerKey.confirmMerits]: "yes",
+          [AnswerKey.confirmMerits]: ["yes"],
         },
+        session,
       });
 
       expect(result.type).to.equal("redirect");
       expect(result.url).to.equal("/cases/new/legal-aid-before");
+      expect(session.journeyDrafts?.createApplication?.confirmMerits).to.equal(
+        "yes",
+      );
     });
 
     it("returns to Check Answers when the confirmation is edited", async () => {
       const result = await client.post(stepUrl, {
         body: {
-          [AnswerKey.confirmMerits]: "yes",
+          [AnswerKey.confirmMerits]: ["yes"],
         },
         query: { returnTo: "check-answers" },
       });

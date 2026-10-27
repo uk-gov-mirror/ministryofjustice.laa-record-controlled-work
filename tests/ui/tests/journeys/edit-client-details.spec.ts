@@ -52,7 +52,7 @@ test("Edit Application - Client details journey", async ({
   // Check that all answers are displayed correctly
   const summaryList = page.locator(".govuk-summary-list");
   const rows = summaryList.locator(".govuk-summary-list__row");
-  await expect(rows).toHaveCount(12);
+  await expect(rows).toHaveCount(13);
   await expect(rows.locator(".govuk-summary-list__value")).toContainText(
     [
       // ECF
@@ -64,6 +64,7 @@ test("Edit Application - Client details journey", async ({
       // Needs protective injunction
       "No",
       "Evidence of domestic abuse (Schedule 1)",
+      "Incomplete",
       // Accessed legal aid before
       "No",
       // First name
@@ -145,4 +146,10 @@ test("Confirm Merits returns to Check Answers in the edit journey", async ({
   await expect(page).toHaveURL(
     `/cases/${applicationId}/task-list/details/check-answers`,
   );
+  const confirmMeritsRow = page
+    .locator(".govuk-summary-list__row")
+    .filter({ hasText: "Client merits" });
+  await expect(
+    confirmMeritsRow.locator(".govuk-summary-list__value"),
+  ).toHaveText("Yes");
 });

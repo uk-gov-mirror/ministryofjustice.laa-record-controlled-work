@@ -1,6 +1,7 @@
 import {
   Condition,
   Self,
+  Transformer,
   validation,
 } from "@ministryofjustice/hmpps-forge/core/authoring";
 import {
@@ -31,6 +32,7 @@ export function body(): GovUKBody {
 export function checkbox(): GovUKCheckboxInput {
   return GovUKCheckboxInput({
     code: AnswerKey.confirmMerits,
+    formatters: [Transformer.Array.First()],
     items: [
       {
         text: confirmMeritsT("checkboxLabel"),

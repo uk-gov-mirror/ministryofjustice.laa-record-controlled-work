@@ -230,7 +230,10 @@ describe("Edit client details check answers step", () => {
   };
 
   describe("Incomplete saved details", () => {
-    const complete = ApplicationDto.toAnswers(ukApplication);
+    const complete = {
+      ...ApplicationDto.toAnswers(ukApplication),
+      confirmMerits: "yes",
+    };
     it("renders completed text safely beside incomplete tags", async () => {
       // TODO: why is there HTML in the parameter?
       const session = {
@@ -256,6 +259,7 @@ describe("Edit client details check answers step", () => {
     const cases = [
       ["ecf", "ECF"],
       ["familyLawClassification", "Type of family law"],
+      ["confirmMerits", "Client merits"],
       ["legalAidBefore", "Accessed legal aid before"],
       ["needsAdviceOnEUOrInternationalMaintenance", "Transitional EU arrangements or an international maintenance agreement"],
       ["needsProtectiveInjunction", "Legal aid to get a protective injunction order"],
@@ -400,6 +404,7 @@ describe("Edit client details check answers step", () => {
           journeyDrafts: {
             [draftKey]: {
               ...ApplicationDto.toAnswers(overseasApplication),
+              confirmMerits: "yes",
               [key]: "",
             },
           },
@@ -824,7 +829,7 @@ describe("Edit client details check answers step", () => {
     });
 
     it("renders the API client data in a summary list", () => {
-  expect(summaryList.properties.rows).to.have.lengthOf(15);
+      expect(summaryList.properties.rows).to.have.lengthOf(16);
       const values = [
         { key: "ECF", value: "No" },
         { key: "Type of family law", value: "Private" },
@@ -855,6 +860,26 @@ describe("Edit client details check answers step", () => {
       for (const { key, value } of values) {
         expectSummaryValue(renderResult, key, value);
       }
+
+      const rows = summaryList.properties.rows as SummaryRow[];
+      const confirmMeritsRow = rows.find(
+        (row) => row.key.text === "Confirm merits",
+      );
+      expect(incompleteTag(confirmMeritsRow)).to.include({
+        classes: "govuk-tag--blue",
+        text: "Incomplete",
+      });
+    });
+
+    it("links 'confirm merits' to the confirmation step", () => {
+      const rows = summaryList.properties.rows as SummaryRow[];
+      const confirmMeritsRow = rows.find(
+        (row) => row.key.text === "Confirm merits",
+      );
+
+      expect(confirmMeritsRow?.actions?.items[0].href).to.equal(
+        "confirm-merits?returnTo=check-answers",
+      );
     });
 
     it("links the home address row to the home address question", () => {
@@ -1009,7 +1034,10 @@ describe("Edit client details check answers step", () => {
     it("saves a versioned complete draft before redirecting to the task list", async () => {
       const session = {
         journeyDrafts: {
-          [draftKey]: ApplicationDto.toAnswers(ukApplication),
+          [draftKey]: {
+            ...ApplicationDto.toAnswers(ukApplication),
+            confirmMerits: "yes",
+          },
         },
         journeyDraftVersions: { [draftKey]: '"00023"' },
       };
@@ -1034,7 +1062,10 @@ describe("Edit client details check answers step", () => {
         data: {},
         headers: new Headers(),
       });
-      const answers = ApplicationDto.toAnswers(ukApplication);
+      const answers = {
+        ...ApplicationDto.toAnswers(ukApplication),
+        confirmMerits: "yes",
+      };
       const session = {
         journeyDrafts: { [draftKey]: answers },
         journeyDraftVersions: { [draftKey]: '"00023"' },

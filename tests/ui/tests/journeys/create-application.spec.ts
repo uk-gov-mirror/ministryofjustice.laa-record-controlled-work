@@ -292,7 +292,7 @@ test("create application flow", async ({ withSelectedOffice: page }) => {
   // Check that all answers are displayed correctly
   const summaryList = page.locator(".govuk-summary-list");
   const rows = summaryList.locator(".govuk-summary-list__row");
-  await expect(rows).toHaveCount(11);
+  await expect(rows).toHaveCount(12);
   await expect(rows.locator(".govuk-summary-list__value")).toHaveText(
     [
       // ECF
@@ -301,6 +301,8 @@ test("create application flow", async ({ withSelectedOffice: page }) => {
       "Public",
       // Letter from Local Authority
       "No",
+      // Confirm merits
+      "Yes",
       // Accessed legal aid before
       "Yes, about the same matter",
       // Did your client get legal help for this matter in the last 6 months?

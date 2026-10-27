@@ -17,6 +17,7 @@ interface SummaryField {
 type SummaryFieldKey =
   | "address"
   | AnswerKey.careProceedingsStarted
+  | AnswerKey.confirmMerits
   | AnswerKey.dateOfBirth
   | AnswerKey.ecf
   | AnswerKey.familyLawClassification
@@ -74,6 +75,18 @@ export function checkAnswersModel(): Record<SummaryFieldKey, SummaryField> {
       Condition.Equals("no"),
     ),
   );
+  const clientMeritsRequired = or(
+    and(
+      isPublicLaw,
+      Answer(AnswerKey.careProceedingsStarted).match(Condition.Equals("no")),
+    ),
+    and(
+      isInjunction,
+      Answer(AnswerKey.needsProtectiveInjunction).match(Condition.Equals("no")),
+      required(AnswerKey.laspoEvidenceScope),
+      Answer(AnswerKey.laspoEvidenceScope).not.match(Condition.Equals("none")),
+    ),
+  );
   const hasFixedAddress = Answer(AnswerKey.haveAHomeAddress).match(
     Condition.Equals("yes"),
   );
@@ -102,6 +115,10 @@ export function checkAnswersModel(): Record<SummaryFieldKey, SummaryField> {
     careProceedingsStarted: field({
       completeWhen: yesNo(AnswerKey.careProceedingsStarted),
       visibleWhen: isPublicLaw,
+    }),
+    confirmMerits: field({
+      completeWhen: required(AnswerKey.confirmMerits),
+      visibleWhen: clientMeritsRequired,
     }),
     dateOfBirth: field({
       completeWhen: required(AnswerKey.dateOfBirth),

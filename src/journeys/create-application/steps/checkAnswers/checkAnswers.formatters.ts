@@ -50,6 +50,16 @@ export function formatChangeAddressRedirect(): ResolvableString {
 }
 
 /**
+ * Formats the client's merits confirmation.
+ * @returns The confirmation answer label.
+ */
+export function formatConfirmMeritsLabel(): ResolvableString {
+  return match(Answer(AnswerKey.confirmMerits))
+    .branch(Condition.Equals("yes"), t("common.yes"))
+    .otherwise(t("common.no"));
+}
+
+/**
  * Formats a date of birth for display.
  * @returns The formatted date of birth.
  */
