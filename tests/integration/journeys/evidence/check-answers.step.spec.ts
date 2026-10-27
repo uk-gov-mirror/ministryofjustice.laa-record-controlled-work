@@ -8,7 +8,6 @@ import { createEvidenceJourneyTestClient } from "../../utils/helpers.js";
 import { RenderBlock } from "@ministryofjustice/hmpps-forge/core/framework";
 
 describe("Check answers step", () => {
-  
   const applicationId = "123e4567-e89b-12d3-a456-426614174000";
   const updateApplicationEvidenceStub = sinon.stub().resolves({
     status: 204,
@@ -34,6 +33,14 @@ describe("Check answers step", () => {
         incomeEvidence: ["wageSlips", "taxCalculationSheet"],
         housingCostsEvidence: [],
         capitalEvidence: ["bankStatementCapital", "shareCertificate"],
+      },
+    },
+  });
+
+  const incompleteSession = () => ({
+    journeyDrafts: {
+      [`evidence:${applicationId}`]: {
+        doYouHaveEvidence: "yes",
       },
     },
   });
@@ -110,6 +117,19 @@ describe("Check answers step", () => {
       expect(result.type).to.equal("redirect");
       const redirectResult = result as TestRedirectResult;
       expect(redirectResult.url).to.equal(`/cases/${applicationId}/task-list`);
+    });
+
+    it("does not submit if answers are incomplete", async () => {
+      const result = await client.post(
+        `/cases/${applicationId}/evidence/check-answers`,
+        {
+          session: incompleteSession(),
+        },
+      );
+      expect(result.type).to.equal("render");
+      const renderResult = result as TestRenderResult;
+
+      expect(renderResult.context.showValidationFailures).to.equal(true);
     });
   });
 });
