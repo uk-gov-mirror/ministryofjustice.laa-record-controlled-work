@@ -11,12 +11,17 @@ service:
 
 ingress:
   enabled: true
+  className: modsec-non-prod
   hosts:
     - host: ""
       paths:
         - path: /
           pathType: Prefix
   annotations:
+    nginx.ingress.kubernetes.io/enable-modsecurity: "true"
+    nginx.ingress.kubernetes.io/modsecurity-snippet: |
+      SecRuleEngine On
+      SecDefaultAction "phase:2,pass,log,tag:github_team=laa-record-controlled-work"
     external-dns.alpha.kubernetes.io/set-identifier: ""
     external-dns.alpha.kubernetes.io/aws-weight: "100"
     nginx.ingress.kubernetes.io/hsts: "true"
@@ -132,7 +137,7 @@ rcw:
     REDIS_SECRET_NAME: elasticache-redis
     SENTRY_DSN: "https://34b761d28dfa94a743acb65213b75ed9@o345774.ingest.us.sentry.io/4512061899866112"
     # Not a secret; the key is exposed in every HTTP response header and page source.
-    SENTRY_CSP_REPORT_ENDPOINT: "https://o345774.ingest.us.sentry.io/api/4512061899866112/security/?sentry_key=34b761d28dfa94a743acb65213b75ed9"
+    SENTRY_CSP_REPORT_ENDPOINT: "https://o345774.ingest.us.sentry.io/api/4512061899866112/security/?sentry_key=34b761d28dfa94a743acb65213b75ed9" # gitleaks:allow - public Sentry key
     SENTRY_ENV: ""
     SENTRY_DEBUG: false
     SENTRY_ENABLED: true
