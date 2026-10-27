@@ -51,7 +51,10 @@ export function initForge(app: Express): void {
       updateApplicationStatus,
     })
     .registerPackage(createApplicationJourney, { createApplication })
-    .registerPackage(declaration, { updateApplicationDeclaration })
+    .registerPackage(declaration, {
+      getApplication,
+      updateApplicationDeclaration,
+    })
     .registerPackage(viewApplicationPackage, { getApplication });
 
   const forgeRouter = createExpressRouter(forge, { nunjucksEnv });
