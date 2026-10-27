@@ -13,10 +13,10 @@ import {
   heading,
   summaryList,
 } from "#/journeys/evidence/steps/check-answers/check-answers.blocks.js";
+import { checkAnswersComplete } from "#/journeys/evidence/steps/check-answers/check-answers.model.js";
 import { PARAMS_KEYS } from "#/journeys/journey.constants.js";
 import { submitButton } from "#/journeys/shared.blocks.js";
 import { t } from "#/lib/i18n.js";
-import { checkAnswersComplete } from "#/journeys/evidence/steps/check-answers/check-answers.model.js";
 
 const TIE_BREAKER_PRIORITY = 100;
 
@@ -49,9 +49,7 @@ export const checkAnswersStep = (): ReturnType<typeof step> =>
     validWhen: [
       validation({
         condition: checkAnswersComplete(),
-        message: t(
-          "journeys.evidence.checkAnswers.validation.incomplete",
-        ),
+        message: t("journeys.evidence.checkAnswers.validation.incomplete"),
         submissionOnly: true,
       }),
     ],

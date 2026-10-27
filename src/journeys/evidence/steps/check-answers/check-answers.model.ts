@@ -1,10 +1,11 @@
-import { EvidenceAnswers } from "#/journeys/evidence/evidence.answers.js";
 import {
   Answer,
   Condition,
-  PredicateExpr,
+  type PredicateExpr,
 } from "@ministryofjustice/hmpps-forge/core/authoring";
-import { and, or, not } from "@ministryofjustice/hmpps-forge/core/authoring";
+import { and, not, or } from "@ministryofjustice/hmpps-forge/core/authoring";
+
+import { EvidenceAnswers } from "#/journeys/evidence/evidence.answers.js";
 
 interface SummaryField {
   completeWhen: PredicateExpr;
@@ -12,14 +13,14 @@ interface SummaryField {
 }
 
 type SummaryFieldKey =
+  | "expenditureEvidence"
+  | "incomeEvidence"
   | EvidenceAnswers.capitalEvidence
   | EvidenceAnswers.doYouHaveEvidence
   | EvidenceAnswers.haveEvidenceOfCapital
   | EvidenceAnswers.haveEvidenceOfExpenditure
-  | EvidenceAnswers.reasonForNoEvidence
   | EvidenceAnswers.moreDetailsForNoEvidence
-  | "expenditureEvidence"
-  | "incomeEvidence";
+  | EvidenceAnswers.reasonForNoEvidence;
 
 /**
  * Requires complete answers only for visible summary fields.
@@ -38,6 +39,10 @@ const yesNo = (key: EvidenceAnswers): PredicateExpr =>
 const required = (key: EvidenceAnswers): PredicateExpr =>
   Answer(key).match(Condition.IsRequired());
 
+/**
+ * Returns the model for the check answers step, defining the conditions for each summary field to be complete and visible.
+ * @returns The check answers model.
+ */
 export function checkAnswersModel(): Record<SummaryFieldKey, SummaryField> {
   const hasIncomeEvidence = Answer(EvidenceAnswers.doYouHaveEvidence).match(
     Condition.Equals("yes"),
@@ -73,31 +78,13 @@ export function checkAnswersModel(): Record<SummaryFieldKey, SummaryField> {
   );
 
   return {
+    capitalEvidence: field({
+      completeWhen: capitalEvidenceComplete,
+      visibleWhen: hasCapitalEvidence,
+    }),
     doYouHaveEvidence: field({
       completeWhen: yesNo(EvidenceAnswers.doYouHaveEvidence),
       visibleWhen: true,
-    }),
-    reasonForNoEvidence: field({
-      completeWhen: required(EvidenceAnswers.reasonForNoEvidence),
-      visibleWhen: Answer(EvidenceAnswers.doYouHaveEvidence).match(
-        Condition.Equals("no"),
-      ),
-    }),
-    moreDetailsForNoEvidence: field({
-      completeWhen: required(EvidenceAnswers.moreDetailsForNoEvidence),
-      visibleWhen: Answer(EvidenceAnswers.doYouHaveEvidence).match(
-        Condition.Equals("no"),
-      ),
-    }),
-    incomeEvidence: field({
-      completeWhen: incomeEvidenceComplete,
-      visibleWhen: hasIncomeEvidence,
-    }),
-    haveEvidenceOfExpenditure: field({
-      completeWhen: yesNo(EvidenceAnswers.haveEvidenceOfExpenditure),
-      visibleWhen: Answer(EvidenceAnswers.doYouHaveEvidence).match(
-        Condition.Equals("yes"),
-      ),
     }),
     expenditureEvidence: field({
       completeWhen: expenditureEvidenceComplete,
@@ -109,9 +96,27 @@ export function checkAnswersModel(): Record<SummaryFieldKey, SummaryField> {
         Condition.Equals("yes"),
       ),
     }),
-    capitalEvidence: field({
-      completeWhen: capitalEvidenceComplete,
-      visibleWhen: hasCapitalEvidence,
+    haveEvidenceOfExpenditure: field({
+      completeWhen: yesNo(EvidenceAnswers.haveEvidenceOfExpenditure),
+      visibleWhen: Answer(EvidenceAnswers.doYouHaveEvidence).match(
+        Condition.Equals("yes"),
+      ),
+    }),
+    incomeEvidence: field({
+      completeWhen: incomeEvidenceComplete,
+      visibleWhen: hasIncomeEvidence,
+    }),
+    moreDetailsForNoEvidence: field({
+      completeWhen: required(EvidenceAnswers.moreDetailsForNoEvidence),
+      visibleWhen: Answer(EvidenceAnswers.doYouHaveEvidence).match(
+        Condition.Equals("no"),
+      ),
+    }),
+    reasonForNoEvidence: field({
+      completeWhen: required(EvidenceAnswers.reasonForNoEvidence),
+      visibleWhen: Answer(EvidenceAnswers.doYouHaveEvidence).match(
+        Condition.Equals("no"),
+      ),
     }),
   };
 }
