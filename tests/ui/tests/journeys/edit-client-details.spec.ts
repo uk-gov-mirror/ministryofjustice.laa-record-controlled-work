@@ -148,7 +148,7 @@ test("Confirm Merits returns to Check Answers in the edit journey", async ({
   );
   const confirmMeritsRow = page
     .locator(".govuk-summary-list__row")
-    .filter({ hasText: "Client merits" });
+    .filter({ hasText: "Confirm merits" });
   await expect(
     confirmMeritsRow.locator(".govuk-summary-list__value"),
   ).toHaveText("Yes");

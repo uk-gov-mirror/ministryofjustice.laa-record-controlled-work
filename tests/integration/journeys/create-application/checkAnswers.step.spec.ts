@@ -98,7 +98,7 @@ describe("Check answers step", () => {
         },
         { key: "Legal aid to get a protective injunction order", value: "No" },
         { key: "Evidence case is in scope", value: "Evidence of domestic abuse (Schedule 1)" },
-        { key: "Client merits", value: "Yes" },
+        { key: "Confirm merits", value: "Yes" },
         {
           key: "Accessed legal aid before",
           value: "Yes, about the same matter",
@@ -120,13 +120,13 @@ describe("Check answers step", () => {
       ]);
     });
 
-    it("links the Client merits row to the confirmation step", () => {
+    it("links the Confirm merits row to the confirmation step", () => {
       const rows = summaryList.properties.rows as Array<{
         actions?: { items: Array<{ href: string }> };
         key: { text: string };
       }>;
       const confirmMeritsRow = rows.find(
-        (row) => row.key.text === "Client merits",
+        (row) => row.key.text === "Confirm merits",
       );
 
       expect(confirmMeritsRow?.actions?.items[0].href).to.equal(

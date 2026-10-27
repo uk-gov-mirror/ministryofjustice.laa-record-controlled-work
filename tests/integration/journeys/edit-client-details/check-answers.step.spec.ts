@@ -259,7 +259,7 @@ describe("Edit client details check answers step", () => {
     const cases = [
       ["ecf", "ECF"],
       ["familyLawClassification", "Type of family law"],
-      ["confirmMerits", "Client merits"],
+      ["confirmMerits", "Confirm merits"],
       ["legalAidBefore", "Accessed legal aid before"],
       ["needsAdviceOnEUOrInternationalMaintenance", "Transitional EU arrangements or an international maintenance agreement"],
       ["needsProtectiveInjunction", "Legal aid to get a protective injunction order"],
