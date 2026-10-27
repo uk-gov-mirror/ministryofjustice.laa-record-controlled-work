@@ -55,6 +55,11 @@ export const completeCreateCasePrivateFamilyLawPath = async (
     .check();
   await clickContinue(page);
 
+  // Confirm merits step.
+  await expect(page).toHaveURL("/cases/new/confirm-merits");
+  await page.getByLabel("I confirm the case meets the criteria").check();
+  await clickContinue(page);
+
   await expect(page).toHaveURL("/cases/new/legal-aid-before");
   await page.getByRole("radio", { name: "No" }).check();
   await clickContinue(page);
