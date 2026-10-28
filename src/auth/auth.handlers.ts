@@ -27,7 +27,7 @@ import {
 } from "#/auth/authCodeFlow/factory.js";
 import { EntraErrorCode } from "#/auth/domain/EntraErrorCode.enum.js";
 import { EntraService } from "#/auth/entra.service.js";
-import { getMsalCacheKey } from "#/auth/msal.cache-key.js";
+import { deleteMsalCache } from "#/auth/msal.cache.js";
 import {
   SESSION_IDLE_TIMEOUT_MS,
   setLifecycle,
@@ -37,7 +37,6 @@ import {
   FORBIDDEN,
   PRIVATE_NO_STORE_CACHE_CONTROL,
 } from "#/lib/constants/http.js";
-import { getRedisClient } from "#/lib/redis.js";
 import { logger } from "#/logger.js";
 
 const EMPTY_STRING_LENGTH = 0;
@@ -222,17 +221,6 @@ async function completeAuthCodeCallback(
   if (!(await persistAuthenticatedSession(req, res))) return;
 
   res.redirect(getValidatedReturnTo(flow.returnTo));
-}
-
-/**
- * Deletes MSAL session cache from Redis when enabled.
- * @param sessionId - The express-session ID.
- */
-async function deleteMsalCache(sessionId: string): Promise<void> {
-  if (!config.redis.enabled) return;
-
-  const key = getMsalCacheKey(sessionId);
-  await getRedisClient().del(key);
 }
 
 /**
