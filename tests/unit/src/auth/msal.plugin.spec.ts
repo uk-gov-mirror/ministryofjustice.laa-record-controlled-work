@@ -4,7 +4,7 @@ import { expect } from "chai";
 import sinon from "sinon";
 
 import { TokenCacheContext } from "@azure/msal-node";
-import { getMsalCacheKey } from "#/auth/msal.cache-key.js";
+import { getMsalCacheKey } from "#/auth/msal.cache.js";
 import { MINUTE } from "#/lib/constants/time.js";
 import { RedisCachePlugin } from "#/auth/msal.plugin.js";
 describe("CachePlugin", () => {

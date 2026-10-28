@@ -20,7 +20,7 @@ import {
 
 import { createEligibilityRouter } from "#/api/eligibility/eligibility.routes.js";
 import { requireAuth } from "#/auth/middleware/requireAuth.middleware.js";
-import { getMsalCacheKey } from "#/auth/msal.cache-key.js";
+import { getMsalCacheKey } from "#/auth/msal.cache.js";
 import { setLifecycle } from "#/auth/session.lifecycle.js";
 import config from "#/config.js";
 import * as redis from "#/lib/redis.js";

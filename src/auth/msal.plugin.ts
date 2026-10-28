@@ -1,7 +1,7 @@
 import type { ICachePlugin, TokenCacheContext } from "@azure/msal-node";
 import type { RedisClientType } from "redis";
 
-import { getMsalCacheKey } from "#/auth/msal.cache-key.js";
+import { getMsalCacheKey } from "#/auth/msal.cache.js";
 
 const NO_EXPIRATION_TIMESTAMP = 0;
 

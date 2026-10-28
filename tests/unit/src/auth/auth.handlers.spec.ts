@@ -22,7 +22,7 @@ import { EntraService } from "#/auth/entra.service.js";
 import { authCodeCallback, signIn } from "#/auth/auth.handlers.js";
 import { getValidatedReturnTo } from "#/auth/auth.redirect.js";
 import { createRelayState } from "#/auth/auth.relay.js";
-import { getMsalCacheKey } from "#/auth/msal.cache-key.js";
+import { getMsalCacheKey } from "#/auth/msal.cache.js";
 import config from "#/config.js";
 import { type Either, failure, success } from "#/lib/either.js";
 import * as redis from "#/lib/redis.js";
