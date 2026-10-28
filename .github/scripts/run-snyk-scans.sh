@@ -195,10 +195,10 @@ run_scan() {
     record_status "$name" passed
   elif is_findings_exit "$exit_code" "$monitor_operation"; then
     if [[ "$findings_are_errors" == "true" ]]; then
-      echo "::error::Snyk $name found high-severity findings"
+      echo "::error::Snyk $name reported findings"
       overall_status=1
     else
-      echo "::warning::Snyk $name found high-severity findings"
+      echo "::warning::Snyk $name reported findings"
     fi
     record_status "$name" findings
   else
@@ -262,14 +262,28 @@ else
   if is_delta_scan; then
     run_delta_scan
   else
-    run_scan "Open Source" snyk test --all-projects --dev \
-      --severity-threshold=high \
-      --sarif-file-output="$report_dir/snyk-open-source.sarif" "${policy_args[@]}"
+    open_source_args=(--all-projects --dev)
+    if [[ "$report_to_snyk" != "true" ]]; then
+      open_source_args+=(--severity-threshold=high)
+    fi
+    open_source_args+=(--sarif-file-output="$report_dir/snyk-open-source.sarif")
+    run_scan "Open Source" snyk test "${open_source_args[@]}" "${policy_args[@]}"
+
+    if [[ "$report_to_snyk" == "true" ]]; then
+      run_scan "Open Source monitoring" snyk monitor \
+        --org="${SNYK_ORG_ID:-}" --dev \
+        --project-name=laa-record-controlled-work-open-source \
+        --target-reference=main "${policy_args[@]}"
+    fi
   fi
 
+  container_args=(--file=Dockerfile)
+  if [[ "$report_to_snyk" != "true" ]]; then
+    container_args+=(--severity-threshold=high)
+  fi
+  container_args+=(--sarif-file-output="$report_dir/snyk-container.sarif")
   run_scan "Container" snyk container test "$image_uri" \
-    --file=Dockerfile --severity-threshold=high \
-    --sarif-file-output="$report_dir/snyk-container.sarif" "${policy_args[@]}"
+    "${container_args[@]}" "${policy_args[@]}"
 
   if [[ "$report_to_snyk" == "true" ]]; then
     run_scan "Container monitoring" snyk container monitor "$image_uri" \
@@ -278,7 +292,10 @@ else
       --target-reference=main "${policy_args[@]}"
   fi
 
-  code_args=(--severity-threshold=high)
+  code_args=()
+  if [[ "$report_to_snyk" != "true" ]]; then
+    code_args+=(--severity-threshold=high)
+  fi
   if [[ "$report_to_snyk" == "true" ]]; then
     code_args+=(--report \
       --project-name=laa-record-controlled-work-code --target-reference=main)
@@ -300,7 +317,10 @@ else
     fi
   done
 
-  iac_args=("$render_dir" --severity-threshold=high)
+  iac_args=("$render_dir")
+  if [[ "$report_to_snyk" != "true" ]]; then
+    iac_args+=(--severity-threshold=high)
+  fi
   if [[ "$report_to_snyk" == "true" ]]; then
     iac_args+=(--report \
       --target-name=laa-record-controlled-work-iac --target-reference=main)

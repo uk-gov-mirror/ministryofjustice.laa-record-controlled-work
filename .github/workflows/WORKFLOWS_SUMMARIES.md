@@ -33,19 +33,25 @@ project name, and `main` target reference. Configure `SNYK_ORG_ID` as a
 repository Actions variable so Delta compares against the intended baseline.
 
 On main, `snyk-monitor` runs `snyk monitor` independently of deployment to update
-the accepted Open Source baseline. Nightly scans do not update that baseline.
+the accepted Open Source baseline. Nightly scans assess all four products at
+every supported severity, refresh all Snyk dashboards and the Open Source
+baseline, upload available SARIF, and send formatted findings to Slack. Findings
+alone do not fail nightly runs. Scan, authentication, monitoring, dashboard,
+rendering and required SARIF upload errors remain operational failures.
 
 ## Nightly Snyk Gate
 
 `.github/workflows/nightly.yml` runs at 06:00 UTC, after Renovate's
 `before 5am Europe/London` merge window, and supports manual dispatch on main.
-It resolves the existing main image by commit tag and calls `snyk.yml` without
-building, deploying, or publishing Snyk snapshots. Findings fail the strict
-scan and trigger a Slack alert; SARIF reports are attached to the run.
-The workflow summary and Slack alert include a concise list of findings from
-Open Source, Container, Code, and IaC scans. Each finding includes its
-description and severity; Snyk vulnerability IDs link to their database entry.
-Empty scan categories are omitted.
+It resolves the immutable main image for the triggering main commit and calls
+`snyk.yml` without building or deploying. Scheduled and manual runs refresh the
+Open Source baseline and all four dashboards. Findings are informational and
+reach Slack on successful runs as well as failure paths with available evidence.
+SARIF reports and rendered artifacts remain attached to the run. The workflow
+summary and Slack report include findings from Open Source, Container, Code, and
+IaC scans. Each finding includes its description and severity; Snyk
+vulnerability IDs link to their database entry. Empty scan categories are
+omitted. Non-main dispatches do not scan or publish.
 
 Fork provenance: `.github/workflows/sast.yml` from
 `laa-reusable-github-actions@a7cbc9ed08d5ab503a21b24297b697797866dc14`,
@@ -83,5 +89,4 @@ Syft - SBOM generation - CycloneDX JSON
 ## Hidden setup steps
 Add the Snyk OAuth client ID and secret to GitHub repository secrets as `SNYK_CLIENT_ID` and `SNYK_CLIENT_SECRET`.
 You need to add renovate application to you github repo you can request this via #ask-operations-engineering
-
 

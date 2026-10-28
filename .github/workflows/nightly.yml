@@ -76,6 +76,7 @@ jobs:
   snyk:
     name: Snyk report
     needs: resolve-main-image
+    if: github.ref == 'refs/heads/main'
     permissions:
       actions: read
       contents: read
@@ -85,14 +86,15 @@ jobs:
     with:
       source_sha: ${{ github.sha }}
       scan_mode: absolute
-      fail_on_findings: true
+      report_to_snyk: true
+      fail_on_findings: false
       image_digest: ${{ needs.resolve-main-image.outputs.image_digest }}
       image_repo: ${{ vars.ECR_REPOSITORY }}
     secrets: inherit
 
-  notify-nightly-snyk-failure:
-    name: Notify Nightly Snyk Failure
-    if: ${{ always() && github.ref == 'refs/heads/main' && contains(needs.*.result, 'failure') }}
+  notify-nightly-snyk:
+    name: Notify Nightly Snyk Report
+    if: ${{ always() && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     environment: uat
     needs:
@@ -125,7 +127,7 @@ jobs:
             printf '%s\n' "$delimiter"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Notify engineering alerts on nightly Snyk failure
+      - name: Notify engineering alerts and findings on nightly Snyk run
         if: ${{ !cancelled() }}
         uses: ./.github/actions/notify-slack
         with:
@@ -135,7 +137,7 @@ jobs:
           unfurl-links: 'false'
           unfurl-media: 'false'
           message: |
-            :red_circle: *Nightly Snyk scan failed for RCW `main` branch*
+            ${{ needs.snyk.result == 'success' && ':large_green_circle: *Nightly Snyk report completed for RCW `main` branch*' || ':red_circle: *Nightly Snyk scan failed for RCW `main` branch*' }}
 
             Findings:
             ${{ steps.findings.outputs.list }}

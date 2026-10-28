@@ -86,6 +86,10 @@ if [[ -n "$report_file" ]]; then
       scan_exit=0
     fi
   fi
+  if [[ "$REPORT_TO_SNYK" == "true" &&
+    ",${SNYK_REPORT_ERROR:-}," == *",$scan,"* ]]; then
+    scan_exit=2
+  fi
 fi
 if [[ "$1" == "test" ]]; then
   if [[ "$SCAN_MODE" == "delta" ]]; then
@@ -154,6 +158,7 @@ run_case() {
     SNYK_EMPTY_SCANS="$empty_scans" \
     SNYK_DELTA_NO_BASELINE="${SNYK_DELTA_NO_BASELINE:-false}" \
     SNYK_LOW_SEVERITY_SCANS="${SNYK_LOW_SEVERITY_SCANS:-}" \
+    SNYK_REPORT_ERROR="${SNYK_REPORT_ERROR:-}" \
     SNYK_HIGH_FINDINGS="${SNYK_HIGH_FINDINGS:-false}" \
     GITHUB_SERVER_URL=https://github.com \
     GITHUB_REPOSITORY=ministryofjustice/laa-record-controlled-work \
@@ -285,6 +290,12 @@ if ! run_case absolute 1 0; then
   exit 1
 fi
 assert_logged 'snyk test --all-projects --dev --severity-threshold=high --sarif-file-output='
+for scan in container code iac; do
+  if ! grep -F "snyk $scan" "$tmp_dir/calls.log" | grep -Fq -- '--severity-threshold=high'; then
+    printf 'Contributor %s scans must retain the high severity gate\n' "$scan" >&2
+    exit 1
+  fi
+done
 setup_section=$(sed -n '/^## Setup checks$/,/^## Snyk scan results$/p' "$tmp_dir/summary.md")
 scan_section=$(sed -n '/^## Snyk scan results$/,/^## Validation$/p' "$tmp_dir/summary.md")
 validation_section=$(sed -n '/^## Validation$/,/^## Findings$/p' "$tmp_dir/summary.md")
@@ -374,6 +385,92 @@ if ! grep -Fq 'No findings.' "$tmp_dir/reports/findings.md" ||
   echo 'Successful clean scans should not create findings sections' >&2
   exit 1
 fi
+if ! run_case absolute 1 0 0 test-org-id false true; then
+  cat "$tmp_dir/output.log" >&2
+  echo 'Informational scans should pass when all severities have findings' >&2
+  exit 1
+fi
+if grep -Fq -- '--severity-threshold' "$tmp_dir/calls.log"; then
+  echo 'Informational scans should assess every supported severity' >&2
+  exit 1
+fi
+for operation in \
+  'snyk test --all-projects --dev --sarif-file-output=' \
+  'snyk container test' \
+  'snyk code test --report --project-name=laa-record-controlled-work-code' \
+  'snyk iac test' \
+  'snyk monitor --org=test-org-id --dev --project-name=laa-record-controlled-work-open-source' \
+  'snyk container monitor'; do
+  assert_logged "$operation"
+done
+for finding in \
+  '| Open Source | findings |' \
+  '| Container | findings |' \
+  '| Code | findings |' \
+  '| IaC | findings |' \
+  '| Open Source monitoring | passed |' \
+  '| Container monitoring | passed |'; do
+  if ! grep -Fq -- "$finding" "$tmp_dir/summary.md"; then
+    printf 'Expected informational result missing: %s\n' "$finding" >&2
+    exit 1
+  fi
+done
+for report in findings.md findings.txt; do
+  for finding in \
+    'javascript/NoSQLInjection (Medium)' \
+    'SNYK-CC-K8S-123' \
+    '(Low): The resource permits public access.'; do
+    if ! grep -Fq -- "$finding" "$tmp_dir/reports/$report"; then
+      printf 'Expected lower-severity finding missing from %s: %s\n' "$report" "$finding" >&2
+      exit 1
+    fi
+  done
+done
+if ! jq -e '.runs[].results[] | select(.level == "warning")' "$tmp_dir/reports/snyk-code.sarif" >/dev/null ||
+  ! jq -e '.runs[].results[] | select(.level == "note")' "$tmp_dir/reports/snyk-iac.sarif" >/dev/null; then
+  echo 'Medium and low findings should remain in their SARIF reports' >&2
+  exit 1
+fi
+if run_case absolute 1 0 2 test-org-id false true; then
+  echo 'An OSS baseline publication failure should fail the run' >&2
+  exit 1
+fi
+for operation in \
+  'snyk container test' \
+  'snyk code test --report --project-name=laa-record-controlled-work-code' \
+  'snyk iac test' \
+  'snyk container monitor'; do
+  assert_logged "$operation"
+done
+for report in findings.md findings.txt snyk-open-source.sarif snyk-container.sarif snyk-code.sarif snyk-iac.sarif; do
+  if [[ ! -f "$tmp_dir/reports/$report" ]]; then
+    printf 'Expected report to remain available after publication failure: %s\n' "$report" >&2
+    exit 1
+  fi
+done
+if SNYK_REPORT_ERROR=code,iac run_case absolute 1 0 0 test-org-id false true; then
+  echo 'A Snyk dashboard publication error should fail the informational run' >&2
+  exit 1
+fi
+for result in '| Code | tool error (2) |' '| IaC | tool error (2) |'; do
+  if ! grep -Fq -- "$result" "$tmp_dir/summary.md"; then
+    printf 'Expected publication error result missing: %s\n' "$result" >&2
+    exit 1
+  fi
+done
+for operation in \
+  'snyk monitor --org=test-org-id --dev --project-name=laa-record-controlled-work-open-source' \
+  'snyk container monitor' \
+  'snyk code test --report --project-name=laa-record-controlled-work-code' \
+  'snyk iac test'; do
+  assert_logged "$operation"
+done
+for report in findings.md findings.txt snyk-open-source.sarif snyk-container.sarif snyk-code.sarif snyk-iac.sarif; do
+  if [[ ! -f "$tmp_dir/reports/$report" ]]; then
+    printf 'Expected report to remain available after dashboard error: %s\n' "$report" >&2
+    exit 1
+  fi
+done
 if run_case absolute 0 0 0 test-org-id false true '' 1; then
   echo 'A failed Container monitor write with exit code 1 should fail the workflow' >&2
   exit 1
@@ -384,8 +481,9 @@ if ! grep -Fq 'Snyk Container monitoring failed with exit code 1' "$tmp_dir/outp
   echo 'Container monitor failures should be reported as operational errors' >&2
   exit 1
 fi
-assert_logged 'snyk code test --severity-threshold=high --report --project-name=laa-record-controlled-work-code --target-reference=main --sarif-file-output='
-assert_logged '--severity-threshold=high --report --target-name=laa-record-controlled-work-iac --target-reference=main --sarif-file-output='
+assert_logged 'snyk monitor --org=test-org-id --dev --project-name=laa-record-controlled-work-open-source --target-reference=main'
+assert_logged 'snyk code test --report --project-name=laa-record-controlled-work-code --target-reference=main --sarif-file-output='
+assert_logged '--report --target-name=laa-record-controlled-work-iac --target-reference=main --sarif-file-output='
 
 if SNYK_HIGH_FINDINGS=true run_case absolute 1 0 0 test-org-id true; then
   echo 'High findings should fail when strict findings are enabled' >&2
@@ -458,6 +556,37 @@ raise "PR and merge-group runs must select OSS delta" unless snyk_inputs["scan_m
 raise "PR and merge-group runs must gate absolute findings" unless snyk_inputs["fail_on_findings"] == expected_gate
 raise "Contributor runs must not publish Snyk snapshots" unless snyk_inputs["report_to_snyk"] == false
 
+nightly = YAML.load_file(File.join(repo_root, ".github/workflows/nightly.yml"))
+nightly_events = nightly.fetch(nightly.key?("on") ? "on" : true)
+raise "Nightly must retain scheduled and manual triggers" unless nightly_events.key?("schedule") && nightly_events.key?("workflow_dispatch")
+
+nightly_jobs = nightly.fetch("jobs")
+resolver = nightly_jobs.fetch("resolve-main-image")
+raise "Only main may resolve a publishable image" unless resolver["if"] == "github.ref == 'refs/heads/main'"
+image_tag = resolver.fetch("steps").filter_map { |step| step.dig("env", "IMAGE_TAG") }.first
+raise "Nightly must assess the triggering main commit" unless image_tag == "${{ github.sha }}"
+
+nightly_scan = nightly_jobs.fetch("snyk")
+raise "Nightly scan must depend on trusted main image resolution" unless Array(nightly_scan["needs"]).include?("resolve-main-image")
+raise "Non-main dispatches must not run the nightly scan" unless nightly_scan["if"] == "github.ref == 'refs/heads/main'"
+nightly_inputs = nightly_scan.fetch("with")
+raise "Nightly must scan the triggering commit" unless nightly_inputs["source_sha"] == "${{ github.sha }}"
+raise "Nightly must use absolute all-severity scans" unless nightly_inputs["scan_mode"] == "absolute" && nightly_inputs["fail_on_findings"] == false
+raise "Nightly must publish Snyk dashboards" unless nightly_inputs["report_to_snyk"] == true
+raise "Nightly must scan the resolved immutable image" unless nightly_inputs["image_digest"] == "${{ needs.resolve-main-image.outputs.image_digest }}"
+raise "Nightly must use the configured immutable image repository" unless nightly_inputs["image_repo"] == "${{ vars.ECR_REPOSITORY }}"
+
+main_monitor = cicd.dig("jobs", "snyk-monitor", "with")
+raise "Main CI must retain OSS-only baseline monitoring" unless main_monitor["scan_mode"] == "monitor" && main_monitor["source_sha"] == "${{ github.sha }}"
+
+publication_guard = snyk.dig("jobs", "scan", "steps").find do |step|
+  step.fetch("run", "").include?("Snyk UI reporting requires the current trusted main commit")
+end
+unless publication_guard && publication_guard["if"].include?("github.ref != 'refs/heads/main'") &&
+  publication_guard["if"].include?("inputs.source_sha != github.sha")
+  raise "Snyk publication must reject non-main or mismatched source commits"
+end
+
 uploads = snyk.dig("jobs", "scan", "steps").select do |step|
   step["uses"]&.include?("upload-sarif")
 end
@@ -467,6 +596,31 @@ uploads.each do |step|
   unless condition.include?("always()") && condition.include?("github.event_name != 'merge_group'") && condition.include?("hashFiles(")
     raise "SARIF upload must attempt available PR reports and exclude merge groups"
   end
+  raise "Required SARIF uploads must fail when publication fails" if step["continue-on-error"]
+end
+
+nightly_notification = nightly_jobs.values.find do |job|
+  Array(job["needs"]).include?("snyk") &&
+    job.fetch("steps", []).any? { |step| step["uses"] == "./.github/actions/notify-slack" }
+end
+raise "Nightly must notify Slack after its scan" unless nightly_notification
+notification_condition = nightly_notification.fetch("if", "")
+unless notification_condition.include?("always()") &&
+  notification_condition.include?("github.ref == 'refs/heads/main'") &&
+  !notification_condition.include?("contains(needs.*.result, 'failure')")
+  raise "Nightly findings must reach Slack on successful main runs"
+end
+notification_steps = nightly_notification.fetch("steps")
+slack_step = notification_steps.find { |step| step["uses"] == "./.github/actions/notify-slack" }
+raise "Nightly findings must use the existing Slack action" unless slack_step
+slack_message = slack_step.dig("with", "message")
+raise "Nightly Slack reports must include formatted findings" unless slack_message.include?("${{ steps.findings.outputs.list }}")
+unless slack_message.include?("needs.snyk.result == 'success'") &&
+  slack_message.include?("Nightly Snyk scan failed")
+  raise "Nightly Slack must retain an operational-failure alert"
+end
+raise "Nightly Slack reports must retain an unavailable-findings fallback" unless notification_steps.any? do |step|
+  step.fetch("run", "").include?("Findings report unavailable.")
 end
 RUBY
 node --test "$repo_root/.github/scripts/test-format-snyk-findings.mjs"
