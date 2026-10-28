@@ -23,7 +23,6 @@ export const evidenceJourney = journey({
     }),
   ],
   path: "/evidence",
-  reachability: { disableReachabilityChecks: true },
   steps: [
     doYouHaveEvidence(journeyCode),
     reasonForNoEvidence(journeyCode),
