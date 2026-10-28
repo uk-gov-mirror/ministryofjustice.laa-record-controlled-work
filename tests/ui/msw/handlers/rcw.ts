@@ -19,12 +19,14 @@ import {
   createApplicationResponse,
   incompleteApplication,
   isClientDetailsTestApplicationId,
+  meansAssessmentApplications,
 } from "../fixtures/rcw.fixtures.js";
 
 const applicationFixtures = [
   incompleteApplication,
   completeApplication,
   clientDetailsApplication,
+  ...Object.values(meansAssessmentApplications),
 ];
 
 const applicationSnapshots = new Map<string, Application>();
