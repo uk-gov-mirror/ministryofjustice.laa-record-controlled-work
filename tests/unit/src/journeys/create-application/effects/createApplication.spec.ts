@@ -81,7 +81,7 @@ describe("CreateApplicationEffect", () => {
     expect(session.journeyDrafts.anotherJourney).to.deep.equal({ keep: "yes" });
   });
 
-  it("sends the complete create request without ECF", async () => {
+  it("sends the complete create request with ECF", async () => {
     createApplicationStub.resolves({
       data: getCreateApplicationResponseMock({ id: applicationId }),
       status: 201,
@@ -96,6 +96,7 @@ describe("CreateApplicationEffect", () => {
         firstName: "Jane",
         lastName: "Bloggs",
         dateOfBirth: "1990-01-01",
+
         niNumber: "AB123456C", // gitleaks:allow - fake NI number used in test fixture
         hasFixedAddress: true,
         address: {
@@ -109,6 +110,7 @@ describe("CreateApplicationEffect", () => {
           country: "GB",
         },
       },
+      ecfFlag: true,
       legalAidLast6Months: true,
       providerOfficeCode: "22439e72-68d3-4770-b435-c352d883d21e",
       reasonForReapplication: "here is a reason",
@@ -119,9 +121,6 @@ describe("CreateApplicationEffect", () => {
         caseMeetsMeritsCriteria: true,
       },
     });
-    expect(createApplicationStub.firstCall.args[0]).not.to.have.property(
-      "ecfFlag",
-    );
   });
 
   it("sends only reached private answers and always sends positive merits", async () => {

@@ -85,6 +85,7 @@ export const CreateApplicationBody = zod
     zod.object({
       legalAidLast6Months: zod.boolean().optional(),
       reasonForReapplication: zod.string().optional(),
+      ecfFlag: zod.boolean().optional(),
       providerOfficeCode: zod.string(),
       scopingQuestions: zod
         .union([

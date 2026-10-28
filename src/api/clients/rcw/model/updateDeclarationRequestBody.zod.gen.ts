@@ -6,7 +6,12 @@
  */
 import * as zod from "zod";
 
+export const updateDeclarationRequestBodyUfnRegExp = new RegExp(
+  "^\\d{6}\\/\\d{3}$",
+);
+
 export const UpdateDeclarationRequestBody = zod.object({
+  ufn: zod.string().regex(updateDeclarationRequestBodyUfnRegExp).optional(),
   declarationConfirmation: zod.boolean(),
   dateSigned: zod.iso.date(),
 });

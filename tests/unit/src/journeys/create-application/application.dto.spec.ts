@@ -32,6 +32,7 @@ describe("fromAnswers method", () => {
           country: "GB",
         },
       },
+      ecfFlag: true,
       legalAidLast6Months: true,
       providerOfficeCode,
       reasonForReapplication: "here is a reason",

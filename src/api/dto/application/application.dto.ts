@@ -28,6 +28,7 @@ interface Application {
   country?: string;
   county?: string;
   dateOfBirth: string;
+  ecfFlag?: boolean;
   firstName: string;
   hasFixedAddress: boolean;
   lastName: string;
@@ -73,6 +74,7 @@ export class ApplicationDto {
   public country?: string;
   public county?: string;
   public dateOfBirth = "";
+  public ecfFlag?: boolean;
   public firstName = "";
   public hasFixedAddress = false;
   public lastName = "";
@@ -126,6 +128,8 @@ export class ApplicationDto {
     return new ApplicationDto({
       ...address,
       dateOfBirth: answers.dateOfBirth,
+      ecfFlag:
+        answers.ecf === "yes" ? true : answers.ecf === "no" ? false : undefined,
       firstName: answers.firstName,
       hasFixedAddress,
       lastName: answers.lastName,
@@ -516,6 +520,7 @@ export class ApplicationDto {
 
     const common = {
       clientDetails,
+      ecfFlag: this.ecfFlag,
       providerOfficeCode: this.providerOfficeCode,
     };
 
@@ -554,11 +559,7 @@ export class ApplicationDto {
       reasonForReapplication: this.getRequiredReasonForReapplication(),
     } satisfies RecentLegalAidRule;
 
-    return {
-      ...common,
-      ...yesSameMatter,
-      ...recentLegalAid,
-    };
+    return { ...common, ...yesSameMatter, ...recentLegalAid };
   }
 
   /**
