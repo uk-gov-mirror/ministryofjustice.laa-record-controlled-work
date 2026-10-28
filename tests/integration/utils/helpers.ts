@@ -43,11 +43,14 @@ export function createForgeTestClient<TDeps>(
   },
 ): ForgeTestClient {
 
-
-  sourceJourney.reachability = {
-    disableReachabilityChecks:
-      overrides?.disableReachabilityChecks ?? true,
+  // Disable reachability checks for the journey and its children
+  const disableChecks = (journey: JourneyDefinition): void => {
+    journey.reachability = {
+      disableReachabilityChecks: overrides?.disableReachabilityChecks ?? true,
+    };
+    journey.children?.forEach(disableChecks);
   };
+  disableChecks(sourceJourney);
 
   const testPackage = createTestPackage(
     createForgePackage({
