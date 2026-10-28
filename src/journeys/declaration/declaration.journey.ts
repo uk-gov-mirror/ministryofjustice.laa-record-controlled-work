@@ -8,7 +8,7 @@ import { ufnStep } from "./steps/ufn/ufn.step.js";
 
 const journeyCode = "declaration";
 
-export const DeclarationJourney = journey({
+export const declarationJourney = journey({
   code: "declaration",
   onAccess: [
     access({

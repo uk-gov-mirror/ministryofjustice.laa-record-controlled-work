@@ -6,9 +6,7 @@ import { expect } from "chai";
 
 import { createEditApplicationJourneyTestClient } from "../../utils/helpers.js";
 import { getBlockWithContent } from "../../utils/getBlockWithContent.helper.js";
-import { DeclarationJourney } from "#/journeys/declaration/declaration.journey.js";
 import sinon from "sinon";
-import { declarationEffectRegistry } from "#/journeys/declaration/declaration.effects.js";
 import { createSavedApplication } from "#tests/fixtures/application.fixtures.js";
 
 describe("Declaration step", () => {

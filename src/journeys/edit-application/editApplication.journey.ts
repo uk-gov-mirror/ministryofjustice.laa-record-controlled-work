@@ -1,6 +1,6 @@
 import { access, journey } from "@ministryofjustice/hmpps-forge/core/authoring";
 
-import { DeclarationJourney } from "#/journeys/declaration/declaration.journey.js";
+import { declarationJourney } from "#/journeys/declaration/declaration.journey.js";
 import { editApplicationEffects } from "#/journeys/edit-application/editApplication.effects.js";
 import { confirmationStep } from "#/journeys/edit-application/steps/confirmation/confirmation.step.js";
 import { taskListStep } from "#/journeys/edit-application/steps/task-list/task-list.step.js";
@@ -12,7 +12,7 @@ const loadApiAnswers = access({
 });
 
 export const editApplicationJourney = journey({
-  children: [editClientDetailsJourney, evidenceJourney, DeclarationJourney],
+  children: [editClientDetailsJourney, evidenceJourney, declarationJourney],
   code: "editApplication",
   onAccess: [loadApiAnswers],
   path: "/cases/:applicationID",
