@@ -1,0 +1,38 @@
+{{- if .Values.networkPolicy.egress.enabled }}
+{{- include "laa-record-controlled-work.egress.validate" . }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "laa-record-controlled-work.fullname" . }}-rcw-egress-policy
+  labels:
+    {{- include "laa-record-controlled-work.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "laa-record-controlled-work.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: rcw
+  policyTypes:
+    - Egress
+  egress:
+    {{- include "laa-record-controlled-work.egress.dnsRule" . | nindent 4 }}
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.networkPolicy.egress.rcwApi.namespace | quote }}
+          podSelector:
+            matchLabels:
+              {{- toYaml .Values.networkPolicy.egress.rcwApi.podSelector | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: 8081
+    - to:
+        {{- include "laa-record-controlled-work.egress.ipBlocks" .Values.networkPolicy.egress.redis.cidrs | nindent 8 }}
+      ports:
+        - protocol: TCP
+          port: 6379
+    - to:
+        {{- include "laa-record-controlled-work.egress.ipBlocks" .Values.networkPolicy.egress.rcwExternalHttps.cidrs | nindent 8 }}
+      ports:
+        - protocol: TCP
+          port: 443
+{{- end }}

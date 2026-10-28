@@ -31,6 +31,24 @@ ingress:
 
 networkPolicy:
   enabled: true
+  egress:
+    enabled: false
+    # Keep inputs empty until destination CIDRs and selectors are verified.
+    dns:
+      namespace: ""
+      podSelector: {}
+    rcwApi:
+      namespace: ""
+      podSelector: {}
+    rcwExternalHttps:
+      cidrs: []
+    ccqExternalHttps:
+      cidrs: []
+    redis:
+      cidrs: []
+    ccqTelemetry:
+      enabled: false
+      cidrs: []
 
 rcw:
   replicaCount: 1

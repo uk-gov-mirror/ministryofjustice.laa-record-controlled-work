@@ -1,6 +1,25 @@
 serviceAccount:
   name: rcw-github-action-service-account
 
+networkPolicy:
+  egress:
+    enabled: false
+    dns:
+      namespace: ""
+      podSelector: {}
+    rcwApi:
+      namespace: laa-record-controlled-work-api-uat
+      podSelector: {}
+    rcwExternalHttps:
+      cidrs: []
+    ccqExternalHttps:
+      cidrs: []
+    redis:
+      cidrs: []
+    ccqTelemetry:
+      enabled: false
+      cidrs: []
+
 ingress:
   hosts:
     - host: laa-record-controlled-work-uat.cloud-platform.service.justice.gov.uk

@@ -1,0 +1,43 @@
+{{- if .Values.networkPolicy.egress.enabled }}
+{{- include "laa-record-controlled-work.egress.validate" . }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "laa-record-controlled-work.fullname" . }}-ccq-egress-policy
+  labels:
+    {{- include "laa-record-controlled-work.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "laa-record-controlled-work.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: ccq
+  policyTypes:
+    - Egress
+  egress:
+    {{- include "laa-record-controlled-work.egress.dnsRule" . | nindent 4 }}
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "laa-record-controlled-work.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: rcw
+      ports:
+        - protocol: TCP
+          port: 3000
+    - to:
+        {{- include "laa-record-controlled-work.egress.ipBlocks" .Values.networkPolicy.egress.redis.cidrs | nindent 8 }}
+      ports:
+        - protocol: TCP
+          port: 6379
+    - to:
+        {{- include "laa-record-controlled-work.egress.ipBlocks" .Values.networkPolicy.egress.ccqExternalHttps.cidrs | nindent 8 }}
+      ports:
+        - protocol: TCP
+          port: 443
+    {{- if .Values.networkPolicy.egress.ccqTelemetry.enabled }}
+    - to:
+        {{- include "laa-record-controlled-work.egress.ipBlocks" .Values.networkPolicy.egress.ccqTelemetry.cidrs | nindent 8 }}
+      ports:
+        - protocol: TCP
+          port: 443
+    {{- end }}
+{{- end }}

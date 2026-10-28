@@ -60,3 +60,62 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{- define "laa-record-controlled-work.egress.validate" -}}
+{{- $egress := .Values.networkPolicy.egress -}}
+{{- range $name, $group := dict "rcwExternalHttps" $egress.rcwExternalHttps "ccqExternalHttps" $egress.ccqExternalHttps "redis" $egress.redis }}
+{{- if empty $group.cidrs }}
+{{- fail (printf "networkPolicy.egress.%s.cidrs must not be empty when egress is enabled" $name) }}
+{{- end }}
+{{- range $index, $cidr := $group.cidrs }}
+{{- if empty (trim $cidr) }}
+{{- fail (printf "networkPolicy.egress.%s.cidrs[%d] must not be empty when egress is enabled" $name $index) }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- if empty $egress.dns.namespace }}
+{{- fail "networkPolicy.egress.dns.namespace must be set when egress is enabled" }}
+{{- end }}
+{{- if empty $egress.dns.podSelector }}
+{{- fail "networkPolicy.egress.dns.podSelector must not be empty when egress is enabled" }}
+{{- end }}
+{{- if empty $egress.rcwApi.namespace }}
+{{- fail "networkPolicy.egress.rcwApi.namespace must be set when egress is enabled" }}
+{{- end }}
+{{- if empty $egress.rcwApi.podSelector }}
+{{- fail "networkPolicy.egress.rcwApi.podSelector must not be empty when egress is enabled" }}
+{{- end }}
+{{- if $egress.ccqTelemetry.enabled }}
+{{- if empty $egress.ccqTelemetry.cidrs }}
+{{- fail "networkPolicy.egress.ccqTelemetry.cidrs must not be empty when telemetry is enabled" }}
+{{- end }}
+{{- range $index, $cidr := $egress.ccqTelemetry.cidrs }}
+{{- if empty (trim $cidr) }}
+{{- fail (printf "networkPolicy.egress.ccqTelemetry.cidrs[%d] must not be empty when telemetry is enabled" $index) }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end -}}
+
+{{- define "laa-record-controlled-work.egress.dnsRule" -}}
+- to:
+  - namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: {{ .Values.networkPolicy.egress.dns.namespace | quote }}
+    podSelector:
+      matchLabels:
+        {{- toYaml .Values.networkPolicy.egress.dns.podSelector | nindent 8 }}
+  ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+{{- end -}}
+
+{{- define "laa-record-controlled-work.egress.ipBlocks" -}}
+{{- $blocks := list -}}
+{{- range . -}}
+{{- $blocks = append $blocks (dict "ipBlock" (dict "cidr" .)) -}}
+{{- end -}}
+{{- toYaml $blocks -}}
+{{- end -}}
