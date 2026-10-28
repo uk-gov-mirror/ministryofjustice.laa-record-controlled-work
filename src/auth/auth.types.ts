@@ -21,6 +21,10 @@ export interface AuthCodeFlowState {
   returnTo: string;
 }
 
+export type LoginPrompt = OAuthPrompt;
+
+export type OAuthPrompt = "login";
+
 export interface PKCECodes {
   challenge: string;
   challengeMethod: string;
