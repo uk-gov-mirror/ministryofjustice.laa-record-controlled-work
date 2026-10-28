@@ -20,8 +20,27 @@ describe("browser Sentry", () => {
       release: "test-release",
       replaysOnErrorSampleRate: 1,
       replaysSessionSampleRate: 0,
-      sendDefaultPii: false,
     });
     expect(options?.integrations).to.be.an("array").with.length(1);
+  });
+
+  it("disables sensitive data collection explicitly", () => {
+    const options = createSentryOptions({
+      dsn: "https://example@sentry.io/123",
+    });
+
+    expect(options?.dataCollection).to.deep.equal({
+      cookies: false,
+      databaseQueryData: false,
+      frameContextLines: 0,
+      genAI: { inputs: false, outputs: false },
+      graphQL: { document: false, variables: false },
+      httpBodies: [],
+      httpHeaders: false,
+      stackFrameVariables: false,
+      urlQueryParams: false,
+      userInfo: false,
+    });
+    expect(options).not.to.have.property("sendDefaultPii");
   });
 });

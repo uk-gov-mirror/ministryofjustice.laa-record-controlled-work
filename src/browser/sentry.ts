@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/browser";
 
+const FRAME_CONTEXT_LINES = 0;
 const REPLAY_SESSION_SAMPLE_RATE = 0;
 const REPLAY_ERROR_SAMPLE_RATE = 1.0;
 
@@ -21,6 +22,18 @@ export function createSentryOptions(configuration: {
   }
 
   return {
+    dataCollection: {
+      cookies: false,
+      databaseQueryData: false,
+      frameContextLines: FRAME_CONTEXT_LINES,
+      genAI: { inputs: false, outputs: false },
+      graphQL: { document: false, variables: false },
+      httpBodies: [],
+      httpHeaders: false,
+      stackFrameVariables: false,
+      urlQueryParams: false,
+      userInfo: false,
+    },
     dsn: configuration.dsn,
     environment: configuration.environment,
     integrations: [
@@ -34,7 +47,6 @@ export function createSentryOptions(configuration: {
     release: configuration.release,
     replaysOnErrorSampleRate: REPLAY_ERROR_SAMPLE_RATE,
     replaysSessionSampleRate: REPLAY_SESSION_SAMPLE_RATE,
-    sendDefaultPii: false,
   };
 }
 
