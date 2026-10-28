@@ -1,4 +1,5 @@
 import type { updateApplicationDeclarationResponse } from "#/api/clients/rcw/schema/applications/applications.gen.js";
+import type { EditApplicationEffectsDeps } from "#/journeys/edit-application/editApplication.types.js";
 
 import { ApiResponseError } from "#/api/clients/api.errors.js";
 import { getRcwApiDefaultOptions } from "#/api/clients/getRcwApiDefaultOptions.js";
@@ -14,10 +15,7 @@ import { HTTP_STATUS } from "#/lib/constants/http.js";
 import * as metrics from "#/lib/metrics.js";
 import { logger } from "#/logger.js";
 
-import type {
-  DeclarationContext,
-  DeclarationDeps,
-} from "../declaration.types.js";
+import type { DeclarationContext } from "../declaration.types.js";
 
 /**
  * Handle submission of the signed declaration.
@@ -25,7 +23,7 @@ import type {
  * @returns void
  */
 export const submitSignedDeclaration =
-  (deps: DeclarationDeps) => async (context: DeclarationContext) => {
+  (deps: EditApplicationEffectsDeps) => async (context: DeclarationContext) => {
     const session = getSessionDataOrThrow(context);
     const applicationId = context.getRequestParam(PARAMS_KEYS.applicationID);
     const confirmed = context.getAnswer(A.DECLARATION_SIGNED_CONFIRM);

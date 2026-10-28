@@ -1,9 +1,5 @@
 import type { EffectFunctionContext } from "@ministryofjustice/hmpps-forge/core";
 
-import type {
-  getApplication,
-  updateApplicationDeclaration,
-} from "#/api/clients/rcw/schema/applications/applications.gen.js";
 import type { JourneySession } from "#/journeys/context.type.js";
 import type { AnswerKey as A } from "#/journeys/declaration/declaration.answers.js";
 
@@ -20,8 +16,3 @@ export type DeclarationContext = EffectFunctionContext<
 >;
 
 export interface DeclarationData extends Record<string, unknown> {}
-
-export interface DeclarationDeps {
-  getApplication: typeof getApplication;
-  updateApplicationDeclaration: typeof updateApplicationDeclaration;
-}

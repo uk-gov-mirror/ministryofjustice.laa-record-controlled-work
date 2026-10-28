@@ -21,7 +21,6 @@ import {
 import { requireAuth } from "#/auth/middleware/requireAuth.middleware.js";
 import { autocomplete } from "#/journeys/components/autocomplete/autocomplete.component.js";
 import createApplicationJourney from "#/journeys/create-application/create-application.index.js";
-import declaration from "#/journeys/declaration/declaration.package.js";
 import { editApplicationPackage } from "#/journeys/edit-application/editApplication.package.js";
 import { selectOfficePackage } from "#/journeys/select-office/select-office.journey.js";
 import { viewApplicationPackage } from "#/journeys/view-application/viewApplication.package.js";
@@ -46,15 +45,12 @@ export function initForge(app: Express): void {
     .registerPackage(selectOfficePackage, { getFirmOffice })
     .registerPackage(editApplicationPackage, {
       getApplication,
+      updateApplicationDeclaration,
       updateApplicationDetails,
       updateApplicationEvidence,
       updateApplicationStatus,
     })
     .registerPackage(createApplicationJourney, { createApplication })
-    .registerPackage(declaration, {
-      getApplication,
-      updateApplicationDeclaration,
-    })
     .registerPackage(viewApplicationPackage, { getApplication });
 
   const forgeRouter = createExpressRouter(forge, { nunjucksEnv });

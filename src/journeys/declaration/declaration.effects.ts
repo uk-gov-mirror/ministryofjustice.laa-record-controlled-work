@@ -1,23 +1,15 @@
 import { EffectRegistry } from "@ministryofjustice/hmpps-forge/core/authoring";
 
-import { loadApplication } from "#/journeys/edit-application/effects/loadApplication.js";
-import { clearAllDraftAnswers } from "#/journeys/effects/clearAllDraftAnswers.js";
-import { clearFieldAnswers } from "#/journeys/effects/clearFieldAnswers.js";
-import { loadDraftAnswers } from "#/journeys/effects/loadDraftAnswers.js";
-import { saveDraftAnswers } from "#/journeys/effects/saveDraftAnswers.js";
+import type { EditApplicationEffectsDeps } from "#/journeys/edit-application/editApplication.types.js";
 
-import type { DeclarationDeps } from "./declaration.types.js";
+import { editApplicationEffects } from "#/journeys/edit-application/editApplication.effects.js";
 
 import { submitSignedDeclaration } from "./effects/submitSignedDeclaration.js";
 
-const registry = new EffectRegistry<DeclarationDeps>();
+const registry = new EffectRegistry<EditApplicationEffectsDeps>();
 
 const effects = {
-  clearAllDraftAnswers: registry.register(clearAllDraftAnswers),
-  clearFieldAnswers: registry.register(clearFieldAnswers),
-  loadApplication: registry.register(loadApplication),
-  loadDraftAnswers: registry.register(loadDraftAnswers),
-  saveDraftAnswers: registry.register(saveDraftAnswers),
+  ...editApplicationEffects,
   submitSignedDeclaration: registry.register(submitSignedDeclaration),
 };
 
