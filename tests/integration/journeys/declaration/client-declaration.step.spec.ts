@@ -4,7 +4,7 @@ import {
 } from "@ministryofjustice/hmpps-forge/core/testing";
 import { expect } from "chai";
 
-import { createForgeTestClient } from "../../utils/helpers.js";
+import { createEvidenceJourneyTestClient } from "../../utils/helpers.js";
 import { getBlockWithContent } from "../../utils/getBlockWithContent.helper.js";
 import { DeclarationJourney } from "#/journeys/declaration/declaration.journey.js";
 import sinon from "sinon";
@@ -27,15 +27,11 @@ describe("Declaration step", () => {
     status: 204,
   });
 
-  const client = createForgeTestClient(
-    DeclarationJourney,
-    declarationEffectRegistry,
+  const client = createEvidenceJourneyTestClient(
     {
-      dependencies: {
         getApplication: getApplicationMock,
         updateApplicationDeclaration: updateApplicationDeclarationMock,
-      },
-    },
+      }
   );
 
   describe(`GET /cases/${uuid}/declaration/confirm`, () => {
