@@ -186,6 +186,7 @@ async function renderedCardRows(
 ): Promise<Array<[string, string]>> {
   const summaryList = page
     .getByRole("heading", { exact: true, level: 4, name: heading })
+    // Select the first <dl> after this heading that has the same parent.
     .locator("xpath=following-sibling::dl[1]");
   const keys = await summaryList
     .locator(".govuk-summary-list__key")
@@ -372,6 +373,7 @@ test("renders household answer values in their cards", async ({
 
   const dependantIncome = page
     .getByRole("heading", { level: 4, name: "Dependant 1 income" })
+    // Select the first <dl> after this heading that has the same parent.
     .locator("xpath=following-sibling::dl[1]");
   await expect(dependantIncome).toContainText("Monthly");
   await expect(dependantIncome).toContainText("£12.50");
@@ -381,6 +383,7 @@ test("renders household answer values in their cards", async ({
       level: 4,
       name: "Client employment income 1",
     })
+    // Select the first <dl> after this heading that has the same parent.
     .locator("xpath=following-sibling::dl[1]");
   await expect(employmentIncome).toContainText("£2,450.00");
 });
