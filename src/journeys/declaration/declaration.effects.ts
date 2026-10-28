@@ -1,5 +1,6 @@
 import { EffectRegistry } from "@ministryofjustice/hmpps-forge/core/authoring";
 
+import { loadApplication } from "#/journeys/edit-application/effects/loadApplication.js";
 import { clearAllDraftAnswers } from "#/journeys/effects/clearAllDraftAnswers.js";
 import { clearFieldAnswers } from "#/journeys/effects/clearFieldAnswers.js";
 import { loadDraftAnswers } from "#/journeys/effects/loadDraftAnswers.js";
@@ -14,6 +15,7 @@ const registry = new EffectRegistry<DeclarationDeps>();
 const effects = {
   clearAllDraftAnswers: registry.register(clearAllDraftAnswers),
   clearFieldAnswers: registry.register(clearFieldAnswers),
+  loadApplication: registry.register(loadApplication),
   loadDraftAnswers: registry.register(loadDraftAnswers),
   saveDraftAnswers: registry.register(saveDraftAnswers),
   submitSignedDeclaration: registry.register(submitSignedDeclaration),
