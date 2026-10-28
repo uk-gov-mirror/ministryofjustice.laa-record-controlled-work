@@ -7,11 +7,11 @@ import {
 
 describe("countries utility", () => {
   it("maps country name to ISO code", () => {
-    expect(mapCountryNameToIsoCode("United Kingdom")).to.equal("GB");
+    expect(mapCountryNameToIsoCode("France")).to.equal("FR");
   });
 
   it("maps ISO code to country name", () => {
-    expect(mapIsoCodeToCountryName("GB")).to.equal("United Kingdom");
+    expect(mapIsoCodeToCountryName("FR")).to.equal("France");
   });
 
   it("returns input when country name is unknown", () => {
