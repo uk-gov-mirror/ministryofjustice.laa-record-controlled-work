@@ -69,7 +69,7 @@ export function createForgeTestClient<TDeps>(
     .createClient(overrides?.renderer);
 }
 
-export function createEvidenceJourneyTestClient(
+export function createEditApplicationJourneyTestClient(
   dependencies: Partial<EditApplicationEffectsDeps> = {},
 ): ForgeTestClient {
   const application = getGetApplicationResponseMock({ evidence: null });

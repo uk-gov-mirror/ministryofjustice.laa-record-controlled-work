@@ -4,7 +4,7 @@ import {
 } from "@ministryofjustice/hmpps-forge/core/testing";
 import { expect } from "chai";
 import sinon from "sinon";
-import { createEvidenceJourneyTestClient } from "../../utils/helpers.js";
+import { createEditApplicationJourneyTestClient } from "../../utils/helpers.js";
 import { RenderBlock } from "@ministryofjustice/hmpps-forge/core/framework";
 
 describe("Check answers step", () => {
@@ -13,7 +13,7 @@ describe("Check answers step", () => {
     status: 204,
   });
 
-  const client = createEvidenceJourneyTestClient({
+  const client = createEditApplicationJourneyTestClient({
     updateApplicationEvidence: updateApplicationEvidenceStub,
   });
 

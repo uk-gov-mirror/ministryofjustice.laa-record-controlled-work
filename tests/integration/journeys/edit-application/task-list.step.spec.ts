@@ -14,6 +14,7 @@ import { editApplicationJourney } from "#/journeys/edit-application/editApplicat
 import { editApplicationTransformersRegistry } from "#/journeys/edit-application/editApplication.transformers.js";
 import { evidenceEffectsRegistry } from "#/journeys/evidence/evidence.effects.js";
 import { getBlockWithContent } from "../../utils/getBlockWithContent.helper.js";
+import { declarationEffectRegistry } from "#/journeys/declaration/declaration.effects.js";
 
 type RenderedTaskListItem = {
   title: { text: string };
@@ -44,6 +45,7 @@ describe("Task list step", () => {
       additionalFunctions: [
         editApplicationTransformersRegistry,
         evidenceEffectsRegistry,
+        declarationEffectRegistry
       ],
       dependencies: {
         getApplication: getApplicationStub,
