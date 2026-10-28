@@ -47,18 +47,29 @@ export const confirmHeading = (): BlockDefinition =>
     text: t("journeys.declaration.confirm.title"),
   });
 
+const firstName = Data(CONTEXT_DATA_KEYS.application)
+  .path(CLIENT_DETAILS_DATA_KEYS.firstName)
+  .pipe(Transformer.String.EscapeHtml());
+
+const lastName = Data(CONTEXT_DATA_KEYS.application)
+  .path(CLIENT_DETAILS_DATA_KEYS.lastName)
+  .pipe(Transformer.String.EscapeHtml());
+
+export const clientName = Format("%1 %2", firstName, lastName);
+
+const declarationListHtml = textListHtml(
+  "journeys.declaration.confirm.declarationList",
+  "govuk-list govuk-list--bullet govuk-!-margin-bottom-6",
+);
+
 export const confirmBody = (): BlockDefinition =>
   GovUKBody({
     classes: "govuk-body",
     text: Format(
-      "%1 %2 %3",
-      Data(CONTEXT_DATA_KEYS.application)
-        .path(CLIENT_DETAILS_DATA_KEYS.firstName)
-        .pipe(Transformer.String.EscapeHtml()),
-      Data(CONTEXT_DATA_KEYS.application)
-        .path(CLIENT_DETAILS_DATA_KEYS.lastName)
-        .pipe(Transformer.String.EscapeHtml()),
-      `${t("journeys.declaration.confirm.declarationText")}<br>${textListHtml("journeys.declaration.confirm.declarationList", "govuk-list govuk-list--bullet govuk-!-margin-bottom-6")}`,
+      "%1 %2<br>%3",
+      clientName,
+      t("journeys.declaration.confirm.declarationText"),
+      declarationListHtml,
     ),
   });
 
