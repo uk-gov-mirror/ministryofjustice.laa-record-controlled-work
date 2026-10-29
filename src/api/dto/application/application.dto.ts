@@ -336,7 +336,7 @@ export class ApplicationDto {
     return {
       [AnswerKey.ukAddressLine1]: address.addressLine1,
       [AnswerKey.ukAddressLine2]: address.addressLine2 ?? undefined,
-      [AnswerKey.ukCountry]: mapIsoCodeToCountryName(address.country),
+      [AnswerKey.ukCountry]: "United Kingdom",
       [AnswerKey.ukCounty]: address.county ?? undefined,
       [AnswerKey.ukPostcode]: address.postCode ?? undefined,
       [AnswerKey.ukTownOrCity]: address.townOrCity ?? undefined,
@@ -446,7 +446,7 @@ export class ApplicationDto {
     return {
       addressLine1: answers[AnswerKey.ukAddressLine1] ?? "",
       addressLine2: answers[AnswerKey.ukAddressLine2],
-      country: countryName ? mapCountryNameToIsoCode(countryName) : "",
+      country: countryName ? "GB" : "",
       county: answers[AnswerKey.ukCounty],
       postCode: answers[AnswerKey.ukPostcode],
       townOrCity: answers[AnswerKey.ukTownOrCity],
