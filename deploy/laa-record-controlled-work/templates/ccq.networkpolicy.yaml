@@ -1,24 +1,36 @@
-{{- if .Values.networkPolicy.enabled }}
+{{- if .Values.ccq.networkPolicy.enabled }}
+{{- include "laa-record-controlled-work.validateNetworkPolicies" (dict
+  "policyPath" "ccq.networkPolicy.policies"
+  "policies" .Values.ccq.networkPolicy.policies
+) }}
+{{- range $policy := .Values.ccq.networkPolicy.policies }}
+{{- if or (not (hasKey $policy "enabled")) $policy.enabled }}
+{{- $policyTypes := $policy.policyTypes }}
+{{- if $policyTypes }}
+---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ include "laa-record-controlled-work.fullname" . }}-ccq-policy
+  name: {{ include "laa-record-controlled-work.fullname" $ }}-{{ $policy.name }}
   labels:
-    {{- include "laa-record-controlled-work.labels" . | nindent 4 }}
+    {{- include "laa-record-controlled-work.labels" $ | nindent 4 }}
 spec:
   podSelector:
     matchLabels:
-      {{- include "laa-record-controlled-work.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/name: {{ include "laa-record-controlled-work.name" $ | quote }}
+      app.kubernetes.io/instance: {{ $.Release.Name | quote }}
       app.kubernetes.io/component: ccq
   policyTypes:
-    - Ingress
+    {{- toYaml $policyTypes | nindent 4 }}
+{{- if has "Ingress" $policyTypes }}
   ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              {{- include "laa-record-controlled-work.selectorLabels" . | nindent 14 }}
-              app.kubernetes.io/component: nginx
-      ports:
-        - protocol: TCP
-          port: 3000
+    {{- tpl (toYaml $policy.ingress) $ | nindent 4 }}
+{{- end }}
+{{- if has "Egress" $policyTypes }}
+  egress:
+    {{- tpl (toYaml $policy.egress) $ | nindent 4 }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
 {{- end }}

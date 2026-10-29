@@ -1,0 +1,41 @@
+{{- $applicationEgressEnabled := or
+  (and .Values.rcw.networkPolicy.enabled (eq (include "laa-record-controlled-work.hasEnabledEgressPolicy" .Values.rcw.networkPolicy.policies | trim) "true"))
+  (and .Values.nginx.networkPolicy.enabled (eq (include "laa-record-controlled-work.hasEnabledEgressPolicy" .Values.nginx.networkPolicy.policies | trim) "true"))
+  (and .Values.ccq.networkPolicy.enabled (eq (include "laa-record-controlled-work.hasEnabledEgressPolicy" .Values.ccq.networkPolicy.policies | trim) "true"))
+}}
+{{- if and .Values.testConnection.networkPolicy.enabled $applicationEgressEnabled }}
+{{- include "laa-record-controlled-work.validateNetworkPolicies" (dict
+  "policyPath" "testConnection.networkPolicy.policies"
+  "policies" .Values.testConnection.networkPolicy.policies
+) }}
+{{- range $policy := .Values.testConnection.networkPolicy.policies }}
+{{- if or (not (hasKey $policy "enabled")) $policy.enabled }}
+{{- $policyTypes := $policy.policyTypes }}
+{{- if $policyTypes }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "laa-record-controlled-work.fullname" $ }}-{{ $policy.name }}
+  labels:
+    {{- include "laa-record-controlled-work.labels" $ | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "laa-record-controlled-work.name" $ | quote }}
+      app.kubernetes.io/instance: {{ $.Release.Name | quote }}
+      app.kubernetes.io/component: test-connection
+  policyTypes:
+    {{- toYaml $policyTypes | nindent 4 }}
+{{- if has "Ingress" $policyTypes }}
+  ingress:
+    {{- tpl (toYaml $policy.ingress) $ | nindent 4 }}
+{{- end }}
+{{- if has "Egress" $policyTypes }}
+  egress:
+    {{- tpl (toYaml $policy.egress) $ | nindent 4 }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

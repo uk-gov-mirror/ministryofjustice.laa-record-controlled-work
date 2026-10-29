@@ -29,28 +29,105 @@ ingress:
     nginx.ingress.kubernetes.io/hsts-include-subdomains: "true"
     nginx.ingress.kubernetes.io/hsts-preload: "true"
 
-networkPolicy:
-  enabled: true
-  egress:
-    enabled: false
-    # Keep inputs empty until destination CIDRs and selectors are verified.
-    dns:
-      namespace: ""
-      podSelector: {}
-    rcwApi:
-      namespace: ""
-      podSelector: {}
-    rcwExternalHttps:
-      cidrs: []
-    ccqExternalHttps:
-      cidrs: []
-    redis:
-      cidrs: []
-    ccqTelemetry:
-      enabled: false
-      cidrs: []
-
 rcw:
+  networkPolicy:
+    enabled: true
+    policies:
+      - name: rcw-ingress-from-nginx-and-ccq
+        policyTypes:
+          - Ingress
+        ingress:
+          - from:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: '{{ include "laa-record-controlled-work.name" $ }}'
+                    app.kubernetes.io/instance: '{{ $.Release.Name }}'
+                    app.kubernetes.io/component: nginx
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: '{{ include "laa-record-controlled-work.name" $ }}'
+                    app.kubernetes.io/instance: '{{ $.Release.Name }}'
+                    app.kubernetes.io/component: ccq
+            ports:
+              - protocol: TCP
+                port: 3000
+      - name: rcw-egress-to-k8s-dns
+        enabled: false
+        policyTypes:
+          - Egress
+        egress:
+          - to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: kube-system
+                podSelector:
+                  matchExpressions:
+                    - key: k8s-app
+                      operator: In
+                      values:
+                        - kube-dns
+                        - coredns
+            ports:
+              - protocol: UDP
+                port: 53
+              - protocol: TCP
+                port: 53
+      - name: rcw-egress-to-rcw-api
+        enabled: false
+        policyTypes:
+          - Egress
+        egress:
+          - to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: 'laa-record-controlled-work-api-{{ $.Values.rcw.env.NODE_ENV }}'
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: laa-record-controlled-work-api
+                    app.kubernetes.io/instance: laa-record-controlled-work-api
+            ports:
+              - protocol: TCP
+                port: 8081
+      - name: rcw-egress-to-redis
+        enabled: false
+        policyTypes:
+          - Egress
+        egress:
+          - to:
+              - ipBlock:
+                  cidr: 172.20.0.0/16  # Cloud Platform AWS VPC - for Redis
+            ports:
+              - protocol: TCP
+                port: 6379
+      - name: rcw-egress-via-https
+        enabled: false
+        policyTypes:
+          - Egress
+        egress:
+          # Add API, PDA, and GA4 CIDRs before enabling egress rules.
+          - to: []
+            ports:
+              - protocol: TCP
+                port: 443
+      - name: rcw-egress-to-sentry
+        enabled: false
+        policyTypes:
+          - Egress
+        egress:
+          # Sentry US organization-subdomain event ingestion ranges.
+          # https://docs.sentry.io/security-legal-pii/security/ip-ranges/#event-ingestion
+          - to:
+              - ipBlock:
+                  cidr: 34.160.81.0/32
+              - ipBlock:
+                  cidr: 34.102.210.18/32
+              - ipBlock:
+                  cidr: 2600:1901:0:5e8a::/64
+              - ipBlock:
+                  cidr: 2600:1901:0:7edb::/64
+            ports:
+              - protocol: TCP
+                port: 443
   replicaCount: 1
 
   image:
@@ -177,7 +254,135 @@ rcw:
   tolerations: []
   affinity: {}
 
+testConnection:
+  networkPolicy:
+    enabled: true
+    policies:
+      - name: test-connection-egress-to-k8s-dns
+        policyTypes:
+          - Egress
+        egress:
+          - to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: kube-system
+                podSelector:
+                  matchExpressions:
+                    - key: k8s-app
+                      operator: In
+                      values:
+                        - kube-dns
+                        - coredns
+            ports:
+              - protocol: UDP
+                port: 53
+              - protocol: TCP
+                port: 53
+      - name: test-connection-egress-to-nginx
+        policyTypes:
+          - Egress
+        egress:
+          - to:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: '{{ include "laa-record-controlled-work.name" $ }}'
+                    app.kubernetes.io/instance: '{{ $.Release.Name }}'
+                    app.kubernetes.io/component: nginx
+            ports:
+              - protocol: TCP
+                port: 8080
+
 ccq:
+  networkPolicy:
+    enabled: true
+    policies:
+      - name: ccq-ingress-from-nginx
+        policyTypes:
+          - Ingress
+        ingress:
+          - from:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: '{{ include "laa-record-controlled-work.name" $ }}'
+                    app.kubernetes.io/instance: '{{ $.Release.Name }}'
+                    app.kubernetes.io/component: nginx
+            ports:
+              - protocol: TCP
+                port: 3000
+      - name: ccq-egress-to-k8s-dns
+        enabled: false
+        policyTypes:
+          - Egress
+        egress:
+          - to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: kube-system
+                podSelector:
+                  matchExpressions:
+                    - key: k8s-app
+                      operator: In
+                      values:
+                        - kube-dns
+                        - coredns
+            ports:
+              - protocol: UDP
+                port: 53
+              - protocol: TCP
+                port: 53
+      - name: ccq-egress-to-rcw
+        enabled: false
+        policyTypes:
+          - Egress
+        egress:
+          - to:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: '{{ include "laa-record-controlled-work.name" $ }}'
+                    app.kubernetes.io/instance: '{{ $.Release.Name }}'
+                    app.kubernetes.io/component: rcw
+            ports:
+              - protocol: TCP
+                port: 3000
+      - name: ccq-egress-to-redis
+        enabled: false
+        policyTypes:
+          - Egress
+        egress:
+          # Add Redis CIDRs before enabling egress rules.
+          - to: []
+            ports:
+              - protocol: TCP
+                port: 6379
+      - name: ccq-egress-via-https
+        enabled: false
+        policyTypes:
+          - Egress
+        egress:
+          # Add CFE and GA4 CIDRs before enabling egress rules.
+          - to: []
+            ports:
+              - protocol: TCP
+                port: 443
+      - name: ccq-egress-to-sentry
+        enabled: false
+        policyTypes:
+          - Egress
+        egress:
+          # Sentry US organization-subdomain event ingestion ranges.
+          # https://docs.sentry.io/security-legal-pii/security/ip-ranges/#event-ingestion
+          - to:
+              - ipBlock:
+                  cidr: 34.160.81.0/32
+              - ipBlock:
+                  cidr: 34.102.210.18/32
+              - ipBlock:
+                  cidr: 2600:1901:0:5e8a::/64
+              - ipBlock:
+                  cidr: 2600:1901:0:7edb::/64
+            ports:
+              - protocol: TCP
+                port: 443
   replicaCount: 1
 
   image:
@@ -211,6 +416,74 @@ ccq:
       memory: 512Mi
 
 nginx:
+  networkPolicy:
+    enabled: true
+    policies:
+      - name: nginx-ingress-from-ingress-and-test
+        policyTypes:
+          - Ingress
+        ingress:
+          - from:
+              - namespaceSelector:
+                  matchLabels:
+                    component: ingress-controllers
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: '{{ include "laa-record-controlled-work.name" $ }}'
+                    app.kubernetes.io/instance: '{{ $.Release.Name }}'
+                    app.kubernetes.io/component: test-connection
+            ports:
+              - protocol: TCP
+                port: 8080
+      - name: nginx-egress-to-k8s-dns
+        enabled: false
+        policyTypes:
+          - Egress
+        egress:
+          - to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: kube-system
+                podSelector:
+                  matchExpressions:
+                    - key: k8s-app
+                      operator: In
+                      values:
+                        - kube-dns
+                        - coredns
+            ports:
+              - protocol: UDP
+                port: 53
+              - protocol: TCP
+                port: 53
+      - name: nginx-egress-to-rcw
+        enabled: false
+        policyTypes:
+          - Egress
+        egress:
+          - to:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: '{{ include "laa-record-controlled-work.name" $ }}'
+                    app.kubernetes.io/instance: '{{ $.Release.Name }}'
+                    app.kubernetes.io/component: rcw
+            ports:
+              - protocol: TCP
+                port: 3000
+      - name: nginx-egress-to-ccq
+        enabled: false
+        policyTypes:
+          - Egress
+        egress:
+          - to:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: '{{ include "laa-record-controlled-work.name" $ }}'
+                    app.kubernetes.io/instance: '{{ $.Release.Name }}'
+                    app.kubernetes.io/component: ccq
+            ports:
+              - protocol: TCP
+                port: 3000
   replicaCount: 1
 
   image:
