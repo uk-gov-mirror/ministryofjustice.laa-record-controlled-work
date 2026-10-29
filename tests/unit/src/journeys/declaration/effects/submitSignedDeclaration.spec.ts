@@ -27,6 +27,7 @@ describe("submitSignedDeclaration", () => {
   const createContext = (
     confirmed: string[] | undefined,
     signedDate: string | undefined,
+    ufn: string | undefined,
   ) => {
     return {
       getAnswer: sinon.stub().callsFake((key: string) => {
@@ -35,6 +36,8 @@ describe("submitSignedDeclaration", () => {
             return confirmed;
           case "declarationSignedDate":
             return signedDate;
+          case "declarationUfn":
+            return ufn;
           default:
             return undefined;
         }
@@ -48,7 +51,7 @@ describe("submitSignedDeclaration", () => {
 
   it("calls updateApplicationDeclaration() when all expected data is available", async () => {
     const { deps, mock } = createDeps(204);
-    const context = createContext(["yes"], date);
+    const context = createContext(["yes"], date, "123456/789");
     await submitSignedDeclaration(deps)(context);
 
     expect(mock.called).to.be.equal(true);
@@ -56,13 +59,14 @@ describe("submitSignedDeclaration", () => {
       mock.calledWith(applicationId, {
         dateSigned: date,
         declarationConfirmation: true,
+        ufn: "123456/789"
       }),
     ).to.be.equal(true);
   });
 
   it("throws when the session is missing", async () => {
     const { deps } = createDeps(204);
-    const context = createContext(["yes"], date);
+    const context = createContext(["yes"], date, "123456/789");
     context.getSession = sinon.stub().returns(undefined);
 
     try {
@@ -75,7 +79,7 @@ describe("submitSignedDeclaration", () => {
 
   it("throws when the applicationId is missing", async () => {
     const { deps } = createDeps(204);
-    const context = createContext(["yes"], date);
+    const context = createContext(["yes"], date, "123456/789");
     context.getRequestParam = sinon.stub().returns(undefined);
 
     try {
@@ -88,7 +92,7 @@ describe("submitSignedDeclaration", () => {
 
   it("throws when the declaration confirmation answer is missing", async () => {
     const { deps } = createDeps(204);
-    const context = createContext(undefined, date);
+    const context = createContext(undefined, date, "123456/789");
 
     try {
       await submitSignedDeclaration(deps)(context);
@@ -100,7 +104,7 @@ describe("submitSignedDeclaration", () => {
 
   it("throws when the declaration signed date answer is missing", async () => {
     const { deps } = createDeps(204);
-    const context = createContext(["yes"], undefined);
+    const context = createContext(["yes"], undefined, "123456/789");
 
     try {
       await submitSignedDeclaration(deps)(context);
@@ -112,7 +116,7 @@ describe("submitSignedDeclaration", () => {
 
   it("throws when the API call fails", async () => {
     const { deps, mock } = createDeps(204);
-    const context = createContext(["yes"], date);
+    const context = createContext(["yes"], date, "123456/789");
 
     mock.throws(new Error("API call failed"));
 
@@ -127,7 +131,7 @@ describe("submitSignedDeclaration", () => {
   [200, 400].forEach((status) => {
     it(`throws when the API response is not 204 (${status})`, async () => {
       const { deps } = createDeps(status);
-      const context = createContext(["yes"], date);
+      const context = createContext(["yes"], date, "123456/789");
 
       try {
         await submitSignedDeclaration(deps)(context);
