@@ -1,12 +1,10 @@
-import { createForgeTestClient } from "#tests/integration/utils/helpers.js";
+import { createEditApplicationJourneyTestClient } from "#tests/integration/utils/helpers.js";
 import { faker } from "@faker-js/faker";
 import {
   TestRedirectResult,
   TestRenderResult,
 } from "@ministryofjustice/hmpps-forge/core/testing";
 import { expect } from "chai";
-import { declarationEffectRegistry } from "#/journeys/declaration/declaration.effects.js";
-import { DeclarationJourney } from "#/journeys/declaration/declaration.journey.js";
 import sinon from "sinon";
 import { RenderBlock } from "@ministryofjustice/hmpps-forge/core/framework";
 import { getBlockWithContent } from "#tests/integration/utils/getBlockWithContent.helper.js";
@@ -18,15 +16,12 @@ describe("Check answers step", () => {
     status: 204,
   });
 
-  const client = createForgeTestClient(
-    DeclarationJourney,
-    declarationEffectRegistry,
+  const client = createEditApplicationJourneyTestClient(
     {
-      dependencies: {
         updateApplicationDeclaration: updateApplicationDeclarationMock,
-      },
-    },
+      }
   );
+
 
   const session = {
     journeyDrafts: {

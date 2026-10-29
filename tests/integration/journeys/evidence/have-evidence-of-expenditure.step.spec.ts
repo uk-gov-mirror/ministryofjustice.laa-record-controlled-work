@@ -3,12 +3,12 @@ import {
   TestRedirectResult,
 } from "@ministryofjustice/hmpps-forge/core/testing";
 import { expect } from "chai";
-import { createEvidenceJourneyTestClient } from "../../utils/helpers.js";
+import { createEditApplicationJourneyTestClient } from "../../utils/helpers.js";
 import { RenderBlock } from "@ministryofjustice/hmpps-forge/core/framework";
 
 describe("Do you have evidence of expenditure step", () => {
   const applicationId = "123e4567-e89b-12d3-a456-426614174000";
-  const client = createEvidenceJourneyTestClient();
+  const client = createEditApplicationJourneyTestClient();
 
   describe("GET /cases/evidence/have-evidence-of-expenditure", () => {
     let renderResult: TestRenderResult;

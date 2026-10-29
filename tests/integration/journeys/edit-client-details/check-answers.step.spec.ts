@@ -19,6 +19,7 @@ import { JourneyCode } from "#/journeys/JourneyCode.enum.js";
 import { setupNunjucks } from "#/middleware/setupNunjucks.js";
 import { createSavedApplication } from "#tests/fixtures/application.fixtures.js";
 import { createForgeTestClient } from "../../utils/helpers.js";
+import { declarationEffectRegistry } from "#/journeys/declaration/declaration.effects.js";
 
 type SummaryRow = {
   actions?: { items: Array<{ href: string }> };
@@ -114,6 +115,7 @@ describe("Edit client details check answers step", () => {
       additionalFunctions: [
         editApplicationTransformersRegistry,
         evidenceEffectsRegistry,
+        declarationEffectRegistry
       ],
       renderer,
       disableReachabilityChecks: false,

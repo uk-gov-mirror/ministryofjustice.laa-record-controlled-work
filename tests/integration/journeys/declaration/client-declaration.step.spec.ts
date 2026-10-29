@@ -4,27 +4,32 @@ import {
 } from "@ministryofjustice/hmpps-forge/core/testing";
 import { expect } from "chai";
 
-import { createForgeTestClient } from "../../utils/helpers.js";
+import { createEditApplicationJourneyTestClient } from "../../utils/helpers.js";
 import { getBlockWithContent } from "../../utils/getBlockWithContent.helper.js";
-import { DeclarationJourney } from "#/journeys/declaration/declaration.journey.js";
 import sinon from "sinon";
-import { declarationEffectRegistry } from "#/journeys/declaration/declaration.effects.js";
+import { createSavedApplication } from "#tests/fixtures/application.fixtures.js";
 
 describe("Declaration step", () => {
   const uuid = "123e4567-e89b-12d3-a456-426614174000";
+  const clientFirstName = "Jane";
+  const clientLastName = "Doe";
+
+  const getApplicationMock = sinon.stub().resolves({
+    data: createSavedApplication({
+      clientDetails: { firstName: clientFirstName, lastName: clientLastName },
+    }),
+    status: 200,
+  });
 
   const updateApplicationDeclarationMock = sinon.stub().resolves({
     status: 204,
   });
 
-  const client = createForgeTestClient(
-    DeclarationJourney,
-    declarationEffectRegistry,
+  const client = createEditApplicationJourneyTestClient(
     {
-      dependencies: {
+        getApplication: getApplicationMock,
         updateApplicationDeclaration: updateApplicationDeclarationMock,
-      },
-    },
+      }
   );
 
   describe(`GET /cases/${uuid}/declaration/confirm`, () => {
@@ -46,11 +51,12 @@ describe("Declaration step", () => {
         .find(
           (block) =>
             typeof block.properties.text === "string" &&
-            block.properties.text.includes("Joe Bloggs agrees that:"),
+            block.properties.text.includes("agrees that:"),
         );
       expect(body).to.not.equal(undefined);
       const text = body?.properties.text as string;
 
+      expect(text).to.include(`${clientFirstName} ${clientLastName} agrees that:`);
       expect(text).to.include("they've read the");
       expect(text).to.include(
         "LAA privacy policy (opens in a new window or tab)",
