@@ -9,7 +9,9 @@ import { createForgeTestClient } from "#tests/integration/utils/helpers.js";
 import { RenderBlock } from "@ministryofjustice/hmpps-forge/core/framework";
 
 describe("View recorded client details step", () => {
-  const mockData = getGetApplicationResponseMock();
+  const mockData = getGetApplicationResponseMock({
+    modifiedAt: "2026-05-09T23:30:00Z",
+  });
   const uuid = "123e4567-e89b-12d3-a456-426614174000";
 
   const getApplicationStub = sinon
@@ -67,6 +69,7 @@ describe("View recorded client details step", () => {
         {
           day: "numeric",
           month: "short",
+          timeZone: "Europe/London",
           year: "numeric",
         },
       );
