@@ -1,16 +1,24 @@
 /* eslint-disable jsdoc/require-jsdoc -- logger API is intentionally compact and self-explanatory. */
 
 import * as Sentry from "@sentry/node";
-import pino, { type Logger } from "pino";
+import pino, { type DestinationStream, type Logger } from "pino";
 
 export interface LogContext {
   applicationId?: string;
   correlationId?: string;
-  requestId?: string;
-  sessionId?: string;
   userId?: string;
 }
-export interface LogFields extends Record<string, unknown> {}
+
+export interface LogFields extends Record<string, unknown> {
+  applicationId?: string;
+  dependency?: string;
+  durationMs?: number;
+  operation?: string;
+  retryAttempt?: number;
+  statusCode?: number;
+}
+
+const SERVICE_NAME = "record-controlled-work";
 
 const SENSITIVE_FIELD_NAMES = new Set([
   "accessToken",
@@ -33,6 +41,12 @@ const SENSITIVE_FIELD_NAMES = new Set([
   "token",
 ]);
 
+// top-level and one-level-nested matches, as pino redact paths cannot be recursive
+const REDACT_PATHS = [...SENSITIVE_FIELD_NAMES].flatMap((name) => [
+  name,
+  `*.${name}`,
+]);
+
 export class AppLogger {
   constructor(
     private readonly logger: Logger,
@@ -48,83 +62,106 @@ export class AppLogger {
   }
 
   debug(message: string, fields: LogFields = {}): void {
-    this.logger.debug({ context: fields }, message);
-    Sentry.logger.debug(message, {
-      ...this.context,
-      ...redactSensitiveFields(fields),
-    });
+    this.logger.debug(fields, message);
+    Sentry.logger.debug(message, this.sentryAttributes(fields));
   }
   error(message: string, error?: unknown, fields: LogFields = {}): void {
-    this.logger.error({ context: fields, err: error }, message);
-    Sentry.logger.error(message, {
-      ...this.context,
-      ...redactSensitiveFields(fields),
-    });
-
-    if (error instanceof Error) {
-      Sentry.captureException(error);
-    }
+    this.logger.error({ ...fields, err: error }, message);
+    this.sendErrorToSentry(
+      message,
+      error,
+      fields,
+      Sentry.logger.error.bind(Sentry.logger),
+    );
   }
   fatal(message: string, error: unknown, fields: LogFields = {}): void {
-    this.logger.fatal({ context: fields, err: error }, message);
-    Sentry.logger.fatal(message, {
-      ...this.context,
-      ...redactSensitiveFields(fields),
-    });
-
-    if (error instanceof Error) {
-      Sentry.captureException(error);
-    }
+    this.logger.fatal({ ...fields, err: error }, message);
+    this.sendErrorToSentry(
+      message,
+      error,
+      fields,
+      Sentry.logger.fatal.bind(Sentry.logger),
+    );
   }
   info(message: string, fields: LogFields = {}): void {
-    this.logger.info({ context: fields }, message);
-    Sentry.logger.info(message, {
-      ...this.context,
-      ...redactSensitiveFields(fields),
-    });
+    this.logger.info(fields, message);
+    Sentry.logger.info(message, this.sentryAttributes(fields));
   }
   warn(message: string, fields: LogFields = {}): void {
-    this.logger.warn({ context: fields }, message);
-    Sentry.logger.warn(message, {
-      ...this.context,
-      ...redactSensitiveFields(fields),
-    });
+    this.logger.warn(fields, message);
+    Sentry.logger.warn(message, this.sentryAttributes(fields));
+  }
+
+  private sendErrorToSentry(
+    message: string,
+    error: unknown,
+    fields: LogFields,
+    sendLog: (message: string, attributes: Record<string, unknown>) => void,
+  ): void {
+    const attributes = this.sentryAttributes(fields);
+    sendLog(message, attributes);
+    if (error instanceof Error) {
+      Sentry.captureException(error, { extra: { ...attributes, message } });
+    }
+  }
+
+  private sentryAttributes(fields: LogFields): Record<string, unknown> {
+    return { ...this.context, ...redactSensitiveFields(fields) };
   }
 }
 
-export function createLogger(context: LogContext = {}): AppLogger {
+export function createLogger(
+  context: LogContext = {},
+  destination?: DestinationStream,
+): AppLogger {
   return new AppLogger(
-    pino({
-      formatters: {
-        level: (label): Record<string, string> => ({
-          log_level: label.toUpperCase(),
-        }),
+    pino(
+      {
+        base: {
+          environment: process.env.NODE_ENV,
+          service: SERVICE_NAME,
+        },
+        formatters: {
+          level: (label): Record<string, string> => ({
+            level: label.toUpperCase(),
+          }),
+        },
+        level: process.env.LOG_LEVEL ?? "info",
+        messageKey: "message",
+        redact: {
+          censor: "***",
+          paths: REDACT_PATHS,
+        },
+        timestamp,
       },
-      level: process.env.LOG_LEVEL ?? "info",
-      messageKey: "event",
-      redact: {
-        censor: "***",
-        paths: [...SENSITIVE_FIELD_NAMES],
-      },
-      timestamp,
-    }).child(context),
+      destination,
+    ).child(context),
     context,
   );
 }
 
-// shallow redaction of known-sensitive keys before fields are sent to Sentry as log attributes
-function redactSensitiveFields(fields: LogFields): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(fields).map(([key, value]) => [
-      key,
-      SENSITIVE_FIELD_NAMES.has(key) ? "***" : value,
-    ]),
-  );
+function redactSensitiveFields(value: unknown): Record<string, unknown>;
+function redactSensitiveFields(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(redactSensitiveFields);
+  }
+  if (
+    value !== null &&
+    typeof value === "object" &&
+    !(value instanceof Error)
+  ) {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, nested]) => [
+        key,
+        SENSITIVE_FIELD_NAMES.has(key) ? "***" : redactSensitiveFields(nested),
+      ]),
+    );
+  }
+  return value;
 }
 
 export const logger = createLogger();
 
 function timestamp(): string {
-  const isoTimestamp = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
-  return `,"timestamp":"${isoTimestamp}"`;
+  return `,"timestamp":"${new Date().toISOString()}"`;
 }
