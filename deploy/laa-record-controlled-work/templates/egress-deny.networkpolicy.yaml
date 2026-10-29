@@ -1,0 +1,14 @@
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: {{ include "laa-record-controlled-work.fullname" . }}-deny-egress-order
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "laa-record-controlled-work.labels" . | nindent 4 }}
+spec:
+  order: 50.0
+  selector: all()
+  egress:
+    - action: Deny
+  types:
+    - Egress

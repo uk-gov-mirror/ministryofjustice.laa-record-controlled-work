@@ -18,19 +18,47 @@
 {{- end }}
 {{- if has "Egress" $policyTypes }}
 {{- range $ruleIndex, $rule := $policy.egress }}
-{{- if empty $rule.to }}
-{{- fail (printf "%s.%s.egress[%d].to must not be empty" $policyPath $policy.name $ruleIndex) }}
+{{- if empty $rule.action }}
+{{- fail (printf "%s.%s.egress[%d].action must not be empty" $policyPath $policy.name $ruleIndex) }}
 {{- end }}
-{{- range $destination := $rule.to }}
-{{- if hasKey $destination "ipBlock" }}
-{{- if empty (trim (default "" $destination.ipBlock.cidr)) }}
-{{- fail (printf "%s.%s.egress[%d].ipBlock.cidr must not be empty" $policyPath $policy.name $ruleIndex) }}
+{{- $destination := $rule.destination }}
+{{- if empty $destination }}
+{{- fail (printf "%s.%s.egress[%d].destination must not be empty" $policyPath $policy.name $ruleIndex) }}
+{{- end }}
+{{- if and (empty $destination.nets) (empty $destination.selector) (empty $destination.namespaceSelector) }}
+{{- fail (printf "%s.%s.egress[%d].destination must include nets or a selector" $policyPath $policy.name $ruleIndex) }}
+{{- end }}
+{{- range $cidr := $destination.nets }}
+{{- if empty (trim (default "" $cidr)) }}
+{{- fail (printf "%s.%s.egress[%d].destination.nets must not contain empty entries" $policyPath $policy.name $ruleIndex) }}
 {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
+{{- end }}
+{{- end }}
+{{- define "laa-record-controlled-work.renderCalicoEgressPolicies" -}}
+{{- $root := .root -}}
+{{- $component := .component -}}
+{{- range $policy := .policies }}
+{{- if and (or (not (hasKey $policy "enabled")) $policy.enabled) (has "Egress" $policy.policyTypes) }}
+---
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: {{ include "laa-record-controlled-work.fullname" $root }}-{{ $policy.name }}
+  namespace: {{ $root.Release.Namespace | quote }}
+  labels:
+    {{- include "laa-record-controlled-work.labels" $root | nindent 4 }}
+spec:
+  order: 49.0
+  selector: {{ printf "app.kubernetes.io/name == '%s' && app.kubernetes.io/instance == '%s' && app.kubernetes.io/component == '%s'" (include "laa-record-controlled-work.name" $root) $root.Release.Name $component | quote }}
+  types:
+    - Egress
+  egress:
+    {{- tpl (toYaml $policy.egress) $root | nindent 4 }}
 {{- end }}
 {{- end }}
 {{- end }}

@@ -4,9 +4,7 @@
   "policies" .Values.nginx.networkPolicy.policies
 ) }}
 {{- range $policy := .Values.nginx.networkPolicy.policies }}
-{{- if or (not (hasKey $policy "enabled")) $policy.enabled }}
-{{- $policyTypes := $policy.policyTypes }}
-{{- if $policyTypes }}
+{{- if and (or (not (hasKey $policy "enabled")) $policy.enabled) (has "Ingress" $policy.policyTypes) }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -21,16 +19,14 @@ spec:
       app.kubernetes.io/instance: {{ $.Release.Name | quote }}
       app.kubernetes.io/component: nginx
   policyTypes:
-    {{- toYaml $policyTypes | nindent 4 }}
-{{- if has "Ingress" $policyTypes }}
+    - Ingress
   ingress:
     {{- tpl (toYaml $policy.ingress) $ | nindent 4 }}
 {{- end }}
-{{- if has "Egress" $policyTypes }}
-  egress:
-    {{- tpl (toYaml $policy.egress) $ | nindent 4 }}
 {{- end }}
-{{- end }}
-{{- end }}
-{{- end }}
+{{- include "laa-record-controlled-work.renderCalicoEgressPolicies" (dict
+  "root" $
+  "component" "nginx"
+  "policies" .Values.nginx.networkPolicy.policies
+) }}
 {{- end }}
