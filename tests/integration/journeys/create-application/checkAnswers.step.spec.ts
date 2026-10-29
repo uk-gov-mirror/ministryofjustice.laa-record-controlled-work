@@ -57,6 +57,59 @@ describe("Check answers step", () => {
     },
   });
 
+  describe("Parental responsibility", () => {
+    it("shows the answer with a Change link", async () => {
+      const result = await client.get("/cases/new/check-answers", {
+        session: createSession({
+          familyLawClassification: "public",
+          careProceedingsStarted: "yes",
+          careProceedingsParentalResponsibility: "yes",
+        }),
+      });
+
+      expect(result.type).to.equal("render");
+      const [summary] = (result as TestRenderResult).getBlocksByVariant(
+        "govukSummaryList",
+      );
+      const rows = summary.properties.rows as Array<{
+        actions?: { items: Array<{ href: string }> };
+        key: { text: string };
+        value: { text: string };
+      }>;
+      const row = rows.find(
+        (item) => item.key.text === "Parental responsibility",
+      );
+      expect(row?.key.text).to.equal("Parental responsibility");
+      expect(row?.value.text).to.equal("Yes");
+      expect(row?.actions?.items[0].href).to.equal(
+        "parental-responsibility?returnTo=check-answers",
+      );
+    });
+
+    it("hides the row for private family law", async () => {
+      const result = await client.get("/cases/new/check-answers", {
+        session: createSession({
+          familyLawClassification: "private",
+          careProceedingsStarted: "yes",
+          careProceedingsParentalResponsibility: "yes",
+        }),
+      });
+
+      expect(result.type).to.equal("render");
+      const [summary] = (result as TestRenderResult).getBlocksByVariant(
+        "govukSummaryList",
+      );
+      const rows = summary.properties.rows as Array<{
+        key: { text: string };
+        visibleWhen?: boolean;
+      }>;
+      const row = rows.find(
+        (item) => item.key.text === "Parental responsibility",
+      );
+      expect(row?.visibleWhen).to.equal(false);
+    });
+  });
+
   describe("GET /cases/new/check-answers", () => {
     let renderResult: TestRenderResult;
     let summaryList: RenderBlock;
@@ -87,7 +140,7 @@ describe("Check answers step", () => {
         value: row.value.text,
       }));
 
-      expect(rows.length).to.equal(15);
+      expect(rows.length).to.equal(16);
       expect(rows).to.deep.include.members([
         { key: "ECF", value: "No" },
         { key: "Type of family law", value: "Private" },

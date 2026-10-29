@@ -14,6 +14,7 @@ import { laspoEvidenceScopeStep } from "#/journeys/create-application/steps/lasp
 import { legalAidLast6MonthsStep } from "#/journeys/create-application/steps/legalAidLast6Months/legalAidLast6Months.step.js";
 import { letterFromLocalAuthorityStep } from "#/journeys/create-application/steps/letterFromLocalAuthority/letterFromLocalAuthority.step.js";
 import { needsProtectiveInjunctionStep } from "#/journeys/create-application/steps/needsProtectiveInjunction/needsProtectiveInjunction.step.js";
+import { parentalResponsibilityStep } from "#/journeys/create-application/steps/parentalResponsibility/parentalResponsibility.step.js";
 import { JourneyCode } from "#/journeys/JourneyCode.enum.js";
 import { JourneyPath } from "#/journeys/JourneyPath.enum.js";
 
@@ -45,6 +46,7 @@ export const createApplicationJourney = journey({
     legalAidBeforeStep(JourneyCode.CREATE_APPLICATION),
     legalAidLast6MonthsStep(JourneyCode.CREATE_APPLICATION),
     letterFromLocalAuthorityStep(JourneyCode.CREATE_APPLICATION),
+    parentalResponsibilityStep(JourneyCode.CREATE_APPLICATION),
     clientDetailsStep(JourneyCode.CREATE_APPLICATION),
     niNumberStep(JourneyCode.CREATE_APPLICATION),
     haveAHomeAddressStep(JourneyCode.CREATE_APPLICATION),

@@ -29,6 +29,7 @@ import {
   formatLegalAidLast6MonthsLabel,
   formatLetterFromLocalAuthority,
   formatNeedsProtectiveInjunctionLabel,
+  formatParentalResponsibilityLabel,
 } from "#/journeys/create-application/steps/checkAnswers/checkAnswers.formatters.js";
 import { fixedT, t } from "#/lib/i18n.js";
 
@@ -126,6 +127,12 @@ function createSummaryList(
       href: "care-proceedings?returnTo=check-answers",
       label: answerLabelT("letterFromLocalAuthority"),
       value: { text: formatLetterFromLocalAuthority() },
+    },
+    {
+      field: AnswerKey.careProceedingsParentalResponsibility,
+      href: "parental-responsibility?returnTo=check-answers",
+      label: answerLabelT("parentalResponsibility"),
+      value: { text: formatParentalResponsibilityLabel() },
     },
     {
       field: AnswerKey.needsProtectiveInjunction,

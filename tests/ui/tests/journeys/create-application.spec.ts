@@ -94,6 +94,47 @@ test("create application flow", async ({ withSelectedOffice: page }) => {
   await page.getByRole("radio", { name: "Yes" }).check();
   await page.getByRole("button", { name: "Continue" }).click();
 
+  // Parental responsibility page.
+  await expect(page).toHaveURL("/cases/new/parental-responsibility");
+  await expect(page.locator(".govuk-caption-l")).toHaveText(
+    "Client and case details",
+  );
+  await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
+  await expect(
+    page.getByRole("heading", {
+      name: "Does the client have parental responsibility for the child in these proceedings?",
+      level: 1,
+    }),
+  ).toBeVisible();
+
+  await expect(
+    page.getByRole("radio", { name: "Yes", exact: true }),
+  ).not.toBeChecked();
+  await expect(
+    page.getByRole("radio", { name: "No", exact: true }),
+  ).not.toBeChecked();
+
+  // Continue without an answer to check the copydeck's error messages.
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page).toHaveURL("/cases/new/parental-responsibility");
+  await expect(page.locator(".govuk-error-summary__title")).toHaveText(
+    "There is a problem",
+  );
+  await expect(page.locator(".govuk-error-message")).toContainText(
+    "Select if your client has parental responsibility for the child in these proceedings",
+  );
+
+  await page.getByRole("link", { name: "Back", exact: true }).click();
+  await expect(page).toHaveURL("/cases/new/care-proceedings");
+  await expect(
+    page.getByRole("radio", { name: "Yes", exact: true }),
+  ).toBeChecked();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page).toHaveURL("/cases/new/parental-responsibility");
+
+  await page.getByRole("radio", { name: "Yes", exact: true }).check();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+
   // Verify redirection to the legal aid before page.
   await expect(page).toHaveURL("/cases/new/legal-aid-before");
 
@@ -276,7 +317,7 @@ test("create application flow", async ({ withSelectedOffice: page }) => {
   // Check that all answers are displayed correctly
   const summaryList = page.locator(".govuk-summary-list");
   const rows = summaryList.locator(".govuk-summary-list__row");
-  await expect(rows).toHaveCount(11);
+  await expect(rows).toHaveCount(12);
   await expect(rows.locator(".govuk-summary-list__value")).toHaveText(
     [
       // ECF
@@ -284,6 +325,8 @@ test("create application flow", async ({ withSelectedOffice: page }) => {
       // Family law classification
       "Public",
       // Letter from Local Authority
+      "Yes",
+      // Parental responsibility
       "Yes",
       // Accessed legal aid before
       "Yes, about the same matter",
@@ -304,6 +347,19 @@ test("create application flow", async ({ withSelectedOffice: page }) => {
     ],
     { useInnerText: true },
   );
+
+  const parentalRow = rows.filter({
+    has: page.getByText("Parental responsibility", { exact: true }),
+  });
+  await parentalRow.getByRole("link", { name: /Change/ }).click();
+  await expect(page).toHaveURL(
+    "/cases/new/parental-responsibility?returnTo=check-answers",
+  );
+  await expect(
+    page.getByRole("radio", { name: "Yes", exact: true }),
+  ).toBeChecked();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page).toHaveURL("/cases/new/check-answers");
 
   const changeAddressLink = rows
     .filter({ has: page.getByText("Address", { exact: true }) })

@@ -15,6 +15,7 @@ import { legalAidLast6MonthsStep } from "#/journeys/create-application/steps/leg
 import { letterFromLocalAuthorityStep } from "#/journeys/create-application/steps/letterFromLocalAuthority/letterFromLocalAuthority.step.js";
 import { needsProtectiveInjunctionStep } from "#/journeys/create-application/steps/needsProtectiveInjunction/needsProtectiveInjunction.step.js";
 import { niNumberStep } from "#/journeys/create-application/steps/niNumber/niNumber.step.js";
+import { parentalResponsibilityStep } from "#/journeys/create-application/steps/parentalResponsibility/parentalResponsibility.step.js";
 import { editClientDetailsEffects } from "#/journeys/edit-client-details/editClientDetails.effects.js";
 import { checkAnswersStep } from "#/journeys/edit-client-details/steps/check-answers/check-answers.step.js";
 import { JourneyCode } from "#/journeys/JourneyCode.enum.js";
@@ -33,6 +34,7 @@ const stepsDirectlyEnterableWhileEditing = [
   needsProtectiveInjunctionStep(editJourneyCode),
   laspoEvidenceScopeStep(editJourneyCode),
   letterFromLocalAuthorityStep(editJourneyCode),
+  parentalResponsibilityStep(editJourneyCode),
   legalAidBeforeStep(editJourneyCode),
   legalAidLast6MonthsStep(editJourneyCode),
   clientDetailsStep(editJourneyCode),

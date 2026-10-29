@@ -16,6 +16,7 @@ interface SummaryField {
 
 type SummaryFieldKey =
   | "address"
+  | AnswerKey.careProceedingsParentalResponsibility
   | AnswerKey.careProceedingsStarted
   | AnswerKey.dateOfBirth
   | AnswerKey.ecf
@@ -98,6 +99,13 @@ export function checkAnswersModel(): Record<SummaryFieldKey, SummaryField> {
         ),
       ),
       visibleWhen: true,
+    }),
+    careProceedingsParentalResponsibility: field({
+      completeWhen: yesNo(AnswerKey.careProceedingsParentalResponsibility),
+      visibleWhen: and(
+        isPublicLaw,
+        Answer(AnswerKey.careProceedingsStarted).match(Condition.Equals("yes")),
+      ),
     }),
     careProceedingsStarted: field({
       completeWhen: yesNo(AnswerKey.careProceedingsStarted),

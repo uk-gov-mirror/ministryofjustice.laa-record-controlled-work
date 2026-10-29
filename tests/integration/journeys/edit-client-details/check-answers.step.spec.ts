@@ -231,6 +231,58 @@ describe("Edit client details check answers step", () => {
     expectSummaryValue(result as TestRenderResult, label, value);
   };
 
+  describe("Parental responsibility editing", () => {
+    const summaryPath = `/cases/${applicationId}/task-list/details/check-answers`;
+    const parentalPath = `/cases/${applicationId}/task-list/details/parental-responsibility`;
+    const createPublicSession = (answer?: string) => ({
+      journeyDrafts: {
+        [draftKey]: {
+          ...ApplicationDto.toAnswers(ukApplication),
+          familyLawClassification: "public",
+          careProceedingsStarted: "yes",
+          careProceedingsParentalResponsibility: answer,
+        },
+      },
+      journeyDraftVersions: { [draftKey]: '"23"' },
+    });
+
+    it("marks an unanswered question incomplete and blocks updating", async () => {
+      const session = createPublicSession();
+      const rows = await getCheckAnswersRows(session);
+      const row = rows.find(
+        (item) => item.key.text === "Parental responsibility",
+      );
+
+      expect(incompleteTag(row)).to.include({ text: "Incomplete" });
+      const result = await editApplicationClient.post(summaryPath, { session });
+      expect(result.type).to.equal("render");
+      expect(updateApplicationDetailsStub.called).to.equal(false);
+      expect(session.journeyDrafts[draftKey]).to.exist;
+    });
+
+    it("saves the changed parental responsibility answer", async () => {
+      const session = createPublicSession("yes");
+      const changed = await editApplicationClient.post(parentalPath, {
+        session,
+        query: { returnTo: "check-answers" },
+        body: { careProceedingsParentalResponsibility: "no" },
+      });
+
+      expect(changed.type).to.equal("redirect");
+      expect((changed as TestRedirectResult).url).to.equal(summaryPath);
+      await expectDraftValue(session, "Parental responsibility", "No");
+
+      const saved = await editApplicationClient.post(summaryPath, { session });
+      expect(saved.type).to.equal("redirect");
+      expect(updateApplicationDetailsStub.calledOnce).to.equal(true);
+      const [, body] = updateApplicationDetailsStub.firstCall.args;
+      expect(
+        body.scopingQuestions.careProceedingsParentalResponsibility,
+      ).to.equal(false);
+      expect(session.journeyDrafts[draftKey]).to.be.undefined;
+    });
+  });
+
   describe("Incomplete saved details", () => {
     const complete = ApplicationDto.toAnswers(ukApplication);
     it("renders completed text safely beside incomplete tags", async () => {
@@ -826,7 +878,7 @@ describe("Edit client details check answers step", () => {
     });
 
     it("renders the API client data in a summary list", () => {
-  expect(summaryList.properties.rows).to.have.lengthOf(15);
+  expect(summaryList.properties.rows).to.have.lengthOf(16);
       const values = [
         { key: "ECF", value: "No" },
         { key: "Type of family law", value: "Private" },

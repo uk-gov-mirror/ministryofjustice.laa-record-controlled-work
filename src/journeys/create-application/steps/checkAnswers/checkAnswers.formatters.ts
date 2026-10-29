@@ -214,6 +214,17 @@ export function formatOsAddress(): ResolvableString {
 }
 
 /**
+ * Formats the parental responsibility answer.
+ * @returns Yes, No, or the incomplete answer label.
+ */
+export function formatParentalResponsibilityLabel(): ResolvableString {
+  return match(Answer(AnswerKey.careProceedingsParentalResponsibility))
+    .branch(Condition.Equals("yes"), t("common.yes"))
+    .branch(Condition.Equals("no"), t("common.no"))
+    .otherwise(t("journeys.createApplication.checkAnswers.incomplete"));
+}
+
+/**
  * Formats a client's UK address for display.
  * @returns The formatted address HTML.
  */

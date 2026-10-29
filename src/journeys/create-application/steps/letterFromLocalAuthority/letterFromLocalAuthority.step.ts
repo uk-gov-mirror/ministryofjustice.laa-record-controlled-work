@@ -87,8 +87,7 @@ function onSubmitYes(journeyCode: string): SubmitHook {
     onValid: {
       effects: [CreateApplicationEffects.saveDraftAnswers(journeyCode)],
       next: [
-        redirectToCheckAnswers(),
-        tempRedirectToLegalAidBefore(),
+        redirectToParentalResponsibilityWithCheckQuery(),
         redirectToParentalResponsibility(),
       ],
     },
@@ -137,8 +136,19 @@ function redirectToParentalResponsibility(): RedirectOutcome {
 }
 
 /**
+ * Redirect to Parental Responsibility step when editing from Check Answers, so the follow-up question is answered.
+ * @returns Redirect hook.
+ */
+function redirectToParentalResponsibilityWithCheckQuery(): RedirectOutcome {
+  return redirect({
+    goto: "parental-responsibility?returnTo=check-answers",
+    when: hasCheckAnswersInQuery,
+  });
+}
+
+/**
  * Temporary redirect to Legal Aid Before step.
- * @todo Remove this and use the redirectToConfirmMerits and redirectToParentalResponsibility redirects when those steps are available.
+ * @todo Remove this and use the redirectToConfirmMerits redirect when that step is available.
  * @returns Redirect hook.
  */
 function tempRedirectToLegalAidBefore(): RedirectOutcome {

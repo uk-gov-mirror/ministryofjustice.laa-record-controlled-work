@@ -61,8 +61,7 @@ describe("Letter from Local Authority step", () => {
       );
     });
 
-    // TODO MEM-1051 Enable this test when adding the Parental Responsibility step.
-    it.skip("redirects to the Parental Responsibility step when answer is 'Yes'", async () => {
+    it("redirects to the Parental Responsibility step when answer is 'Yes'", async () => {
       const result = (await client.post(stepUrl, {
         body: {
           [AnswerKey.careProceedingsStarted]: "yes",
@@ -94,6 +93,19 @@ describe("Letter from Local Authority step", () => {
       })) as TestRedirectResult;
 
       expect(result.url).to.equal("/cases/new/check-answers");
+    });
+
+    it("goes to the Parental Responsibility step when edited to 'Yes'", async () => {
+      const result = (await client.post(stepUrl, {
+        query: { returnTo: "check-answers" },
+        body: {
+          [AnswerKey.careProceedingsStarted]: "yes",
+        },
+      })) as TestRedirectResult;
+
+      expect(result.url).to.equal(
+        "/cases/new/parental-responsibility?returnTo=check-answers",
+      );
     });
   });
 });

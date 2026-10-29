@@ -484,6 +484,12 @@
           "required": "Select if your client received a letter saying the local authority is initiating care proceedings"
         }
       },
+      "parentalResponsibility": {
+        "title": "Does the client have parental responsibility for the child in these proceedings?",
+        "validation": {
+          "required": "Select if your client has parental responsibility for the child in these proceedings"
+        }
+      },
       "clientDetails": {
         "title": "Your client's details",
         "firstName": {
@@ -605,6 +611,7 @@
           "legalAidLast6Months": "Did your client get legal help for this matter in the last 6 months?",
           "legalAidLast6MonthsReasonForYes": "Reason for new application for same matter",
           "letterFromLocalAuthority": "Local authority is initiating care proceedings",
+          "parentalResponsibility": "Parental responsibility",
           "firstName": "First name",
           "lastName": "Last name",
           "dateOfBirth": "Date of birth",

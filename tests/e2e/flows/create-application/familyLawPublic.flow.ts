@@ -14,7 +14,7 @@ export const startNewCase = async (page: Page): Promise<void> => {
 };
 
 /**
- * Progresses through the shortest *public* family law path.
+ * Progresses through the public family law path with parental responsibility.
  * @param page  The page instance.
  * @returns  Promise that resolves to the application ID.
  */
@@ -39,7 +39,12 @@ export const completeCreateCasePublicFamilyLawPath = async (
 
   // Letter from local authority step.
   await expect(page).toHaveURL("/cases/new/care-proceedings");
-  await page.getByRole("radio", { name: "No" }).check();
+  await page.getByRole("radio", { name: "Yes" }).check();
+  await clickContinue(page);
+
+  // Parental responsibility step.
+  await expect(page).toHaveURL("/cases/new/parental-responsibility");
+  await page.getByRole("radio", { name: "Yes" }).check();
   await clickContinue(page);
 
   // Legal aid before step.
@@ -75,6 +80,13 @@ export const completeCreateCasePublicFamilyLawPath = async (
 
   // Check answers step.
   await expect(page).toHaveURL("/cases/new/check-answers");
+  const parentalAnswer = page
+    .locator(".govuk-summary-list__row")
+    .filter({
+      has: page.getByText("Parental responsibility", { exact: true }),
+    })
+    .locator(".govuk-summary-list__value");
+  await expect(parentalAnswer).toHaveText("Yes");
   await page.getByRole("button", { name: "Save and continue" }).click();
   await expect(page).toHaveURL(taskListUrlPattern());
 
