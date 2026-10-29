@@ -14,7 +14,8 @@ export const declarationJourney = journey({
     access({
       effects: [
         declarationEffects.loadDeclarationAsAnswers(journeyCode),
-        declarationEffects.loadDraftAnswers(journeyCode)],
+        declarationEffects.loadDraftAnswers(journeyCode),
+      ],
     }),
   ],
   path: `/declaration`,
