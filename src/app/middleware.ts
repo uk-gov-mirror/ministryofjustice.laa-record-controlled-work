@@ -6,6 +6,7 @@ import type { CreateRedisStore, GetRedisClient } from "#/lib/redis.js";
 
 import { ENV } from "#/app/env.enum.js";
 import { compression } from "#/app/middleware/compression.middleware.js";
+import { correlationId } from "#/app/middleware/correlationId.middleware.js";
 import { cspNonce } from "#/app/middleware/cspNonce.middleware.js";
 import { addCsrfToLocals, csrf } from "#/app/middleware/csrf.middleware.js";
 import { helmet } from "#/app/middleware/helmet.middleware.js";
@@ -39,6 +40,9 @@ export async function initMiddleware(
   dependencies: Dependencies,
 ): Promise<void> {
   const { createRedisStore, getRedisClient } = dependencies;
+
+  // Resolve the correlation ID first so every later log and API call carries it.
+  app.use(correlationId());
 
   // Parse cookies and adds them to `req.cookies`.
   app.use(cookieParser());

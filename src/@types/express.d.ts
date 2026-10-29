@@ -10,6 +10,7 @@ declare global {
   namespace Express {
     interface Request {
       accessToken?: string;
+      correlationId: string;
       locale: ExpressLocaleLoader;
       session: Partial<session.SessionData> & session.Session;
       user?: AccountInfo;
