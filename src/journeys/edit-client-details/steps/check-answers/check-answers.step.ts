@@ -1,5 +1,4 @@
 import {
-  access,
   Format,
   Params,
   redirect,
@@ -30,11 +29,6 @@ export function checkAnswersStep(journeyCode: string): StepDefinition {
   return step({
     blocks: [heading(CHECK_ANSWERS), editSummaryListBlock(), submitButton()],
     code: "check-answers",
-    onAccess: [
-      access({
-        effects: [editClientDetailsEffects.loadDraftAnswers(journeyCode)],
-      }),
-    ],
     onSubmission: [
       submit({
         onValid: {
