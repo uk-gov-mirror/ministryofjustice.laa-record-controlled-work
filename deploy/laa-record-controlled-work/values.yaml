@@ -52,7 +52,6 @@ rcw:
               - protocol: TCP
                 port: 3000
       - name: rcw-egress-to-k8s-dns
-        enabled: false
         policyTypes:
           - Egress
         egress:
@@ -73,7 +72,6 @@ rcw:
               - protocol: TCP
                 port: 53
       - name: rcw-egress-to-rcw-api
-        enabled: false
         policyTypes:
           - Egress
         egress:
@@ -89,7 +87,6 @@ rcw:
               - protocol: TCP
                 port: 8081
       - name: rcw-egress-to-redis
-        enabled: false
         policyTypes:
           - Egress
         egress:
@@ -99,18 +96,17 @@ rcw:
             ports:
               - protocol: TCP
                 port: 6379
-      - name: rcw-egress-via-https
-        enabled: false
+      - name: rcw-egress-to-cloud-platform
         policyTypes:
           - Egress
         egress:
-          # Add API, PDA, and GA4 CIDRs before enabling egress rules.
-          - to: []
+          - to:
+              - ipBlock:
+                  cidr: 172.20.0.0/16
             ports:
               - protocol: TCP
                 port: 443
       - name: rcw-egress-to-sentry
-        enabled: false
         policyTypes:
           - Egress
         egress:
@@ -125,6 +121,24 @@ rcw:
                   cidr: 2600:1901:0:5e8a::/64
               - ipBlock:
                   cidr: 2600:1901:0:7edb::/64
+            ports:
+              - protocol: TCP
+                port: 443
+      - name: rcw-egress-to-entra
+        policyTypes:
+          - Egress
+        egress:
+          # Microsoft Entra ID (login.microsoftonline.com) - OpenID discovery + JWKS for JWT validation
+          # Source: https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges (ID 56)
+          - to:
+              - ipBlock:
+                  cidr: 20.20.32.0/19
+              - ipBlock:
+                  cidr: 20.190.128.0/18
+              - ipBlock:
+                  cidr: 20.231.128.0/19
+              - ipBlock:
+                  cidr: 40.126.0.0/18
             ports:
               - protocol: TCP
                 port: 443
@@ -310,7 +324,6 @@ ccq:
               - protocol: TCP
                 port: 3000
       - name: ccq-egress-to-k8s-dns
-        enabled: false
         policyTypes:
           - Egress
         egress:
@@ -331,7 +344,6 @@ ccq:
               - protocol: TCP
                 port: 53
       - name: ccq-egress-to-rcw
-        enabled: false
         policyTypes:
           - Egress
         egress:
@@ -345,27 +357,26 @@ ccq:
               - protocol: TCP
                 port: 3000
       - name: ccq-egress-to-redis
-        enabled: false
         policyTypes:
           - Egress
         egress:
-          # Add Redis CIDRs before enabling egress rules.
-          - to: []
+          - to:
+              - ipBlock:
+                  cidr: 172.20.0.0/16
             ports:
               - protocol: TCP
                 port: 6379
-      - name: ccq-egress-via-https
-        enabled: false
+      - name: ccq-egress-to-cloud-platform
         policyTypes:
           - Egress
         egress:
-          # Add CFE and GA4 CIDRs before enabling egress rules.
-          - to: []
+          - to:
+              - ipBlock:
+                  cidr: 172.20.0.0/16
             ports:
               - protocol: TCP
                 port: 443
       - name: ccq-egress-to-sentry
-        enabled: false
         policyTypes:
           - Egress
         egress:
