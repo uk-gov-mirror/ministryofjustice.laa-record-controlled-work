@@ -12,6 +12,7 @@ export const createApplicationBodyTwoTwoTwoReasonForReapplicationRegExp =
   new RegExp(
     "[^\\t\\n\\x0B\\f\\r \\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000\\uFEFF]",
   );
+export const createApplicationBodyThreeEcfFlagDefault = false;
 export const createApplicationBodyThreeClientDetailsTwoNiNumberOneRegExp =
   new RegExp(
     "^(?!BG|GB|KN|NK|NT|TN|ZZ)[A-CEGHJ-PR-TW-Z][A-CEGHJ-NPR-TW-Z][0-9]{6}[ABCD]$",
@@ -85,6 +86,7 @@ export const CreateApplicationBody = zod
     zod.object({
       legalAidLast6Months: zod.boolean().optional(),
       reasonForReapplication: zod.string().optional(),
+      ecfFlag: zod.boolean().default(createApplicationBodyThreeEcfFlagDefault),
       providerOfficeCode: zod.string(),
       scopingQuestions: zod
         .union([

@@ -1,5 +1,5 @@
 import { EffectRegistry } from "@ministryofjustice/hmpps-forge/core/authoring";
-
+import { loadDeclarationAsAnswers } from "#/journeys/declaration/effects/loadDeclarationAsAnswers.js";
 import type { EditApplicationEffectsDeps } from "#/journeys/edit-application/editApplication.types.js";
 
 import { closeIneligibleCase } from "#/journeys/edit-application/effects/closeIneligibleCase.js";
@@ -28,6 +28,9 @@ export const editApplicationEffects = {
     loadApplicationAsAnswers,
   ),
   loadDraftAnswers: editApplicationEffectsRegistry.register(loadDraftAnswers),
+  loadDeclarationAsAnswers: editApplicationEffectsRegistry.register(
+    loadDeclarationAsAnswers,
+  ),
   loadEvidenceAsAnswers: editApplicationEffectsRegistry.register(
     loadEvidenceAsAnswers,
   ),

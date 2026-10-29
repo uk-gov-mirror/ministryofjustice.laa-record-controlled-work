@@ -129,7 +129,20 @@ export function taskList(): BlockDefinition[] {
           t(
             "journeys.editApplication.taskList.EvidenceAndDeclaration.taskItem.declaration.label",
           ),
-          Format("/cases/%1/declaration/", Params(PARAMS_KEYS.applicationID)),
+          match(Data(CONTEXT_DATA_KEYS.declarationStatus))
+            .branch(
+              Condition.Equals(Status.COMPLETED),
+              Format(
+                "/cases/%1/declaration/check-answers",
+                Params(PARAMS_KEYS.applicationID),
+              ),
+            )
+            .otherwise(
+              Format(
+                "/cases/%1/declaration/confirm",
+                Params(PARAMS_KEYS.applicationID),
+              ),
+            ),
           Data(CONTEXT_DATA_KEYS.declarationStatus),
         ),
       ],

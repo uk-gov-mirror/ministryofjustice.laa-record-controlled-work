@@ -3,7 +3,6 @@ import sinon from "sinon";
 import { DeclarationContext } from "#/journeys/declaration/declaration.types.js";
 import { expect } from "chai";
 import { faker } from "@faker-js/faker";
-import { logger } from "#/logger.js";
 import { ApiResponseError } from "#/api/clients/api.errors.js";
 import {
   InvalidSessionError,

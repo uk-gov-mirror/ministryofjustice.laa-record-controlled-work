@@ -79,7 +79,7 @@ export const getGetApplicationResponseMock = <
   ({
     id: faker.string.uuid(),
     applicationRefNumber: faker.string.alpha({ length: { min: 10, max: 20 } }),
-    ufn: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    ufn: faker.string.numeric({ length: { min: 7, max: 7 } }),
     individualLegalAidNumber: faker.string.uuid(),
     providerFirmCode: faker.string.alpha({ length: { min: 10, max: 20 } }),
     providerOfficeCode: faker.string.alpha({ length: { min: 10, max: 20 } }),

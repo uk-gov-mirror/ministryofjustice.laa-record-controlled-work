@@ -12,7 +12,9 @@ export const declarationJourney = journey({
   code: "declaration",
   onAccess: [
     access({
-      effects: [declarationEffects.loadDraftAnswers(journeyCode)],
+      effects: [
+        declarationEffects.loadDeclarationAsAnswers(journeyCode),
+        declarationEffects.loadDraftAnswers(journeyCode)],
     }),
   ],
   path: `/declaration`,

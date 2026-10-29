@@ -28,6 +28,7 @@ export const submitSignedDeclaration =
     const applicationId = context.getRequestParam(PARAMS_KEYS.applicationID);
     const confirmed = context.getAnswer(A.DECLARATION_SIGNED_CONFIRM);
     const date = context.getAnswer(A.DECLARATION_SIGNED_DATE);
+    const ufn = context.getAnswer(A.DECLARATION_UFN);
     const correlationId = context
       .getRequestHeader("x-correlation-id")
       ?.toString();
@@ -47,6 +48,11 @@ export const submitSignedDeclaration =
       throw new UndefinedAnswerError(A.DECLARATION_SIGNED_DATE);
     }
 
+    if (ufn === undefined) {
+      logger.error("Missing declaration UFN answer");
+      throw new UndefinedAnswerError(A.DECLARATION_UFN);
+    }
+
     let response: updateApplicationDeclarationResponse;
     try {
       const body = {
@@ -54,6 +60,7 @@ export const submitSignedDeclaration =
         // The `govukCheckbox` component returns `string[]` even though we only have one checkbox, so we can expect the first value to be our confirmation.
         // eslint-disable-next-line @typescript-eslint/no-magic-numbers -- Just getting the first array value.
         declarationConfirmation: confirmed[0] === "yes",
+        ufn,
       };
 
       const opts = await getRcwApiDefaultOptions({
