@@ -27,6 +27,7 @@ const createApp = async (
   dependencies: Dependencies = {},
 ): Promise<express.Application> => {
   const app = express();
+  app.disable("x-powered-by"); // snyk can't detect this in initSecurity
 
   initSecurity(app);
   await initMiddleware(app, dependencies);

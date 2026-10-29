@@ -29,6 +29,7 @@ describe("security headers", () => {
     expect(notFound.status).to.equal(NOT_FOUND);
 
     for (const { headers } of [asset, dynamic, redirect, notFound]) {
+      expect(headers["x-powered-by"]).to.be.undefined;
       expect(headers["strict-transport-security"]).to.equal(
         "max-age=31536000; includeSubDomains",
       );
