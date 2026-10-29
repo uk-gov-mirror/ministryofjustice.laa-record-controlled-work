@@ -22,6 +22,14 @@ export class BadAuthenticationRequestError extends AuthenticationError {
   }
 }
 
+export class MsalCacheWithoutExpiringSessionError extends AuthenticationError {
+  public readonly name = "MsalCacheWithoutExpiringSessionError";
+
+  constructor() {
+    super("Cannot persist MSAL cache without an expiring session");
+  }
+}
+
 export class MsalError extends AuthenticationError {
   public readonly name = "MsalError";
 

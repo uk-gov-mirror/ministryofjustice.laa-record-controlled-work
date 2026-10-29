@@ -85,6 +85,26 @@ test("uses SARIF severity levels for findings without CVSS metadata", () => {
   assert.match(result.markdown, /javascript\/NoSQLInjection \(Medium\)/);
 });
 
+test("formats high and low severity findings for Markdown and Slack", () => {
+  const result = formatFindings({
+    Container: report({
+      description: "A vulnerable package is installed.",
+      id: "SNYK-LINUX-BZIP2-106947",
+      level: "error",
+    }),
+    IaC: report({
+      description: "The resource permits public access.",
+      id: "SNYK-CC-K8S-123",
+      level: "note",
+    }),
+  });
+
+  assert.match(result.markdown, /SNYK-LINUX-BZIP2-106947\].*\(High\)/);
+  assert.match(result.markdown, /SNYK-CC-K8S-123\].*\(Low\)/);
+  assert.match(result.slack, /SNYK-LINUX-BZIP2-106947> \(High\)/);
+  assert.match(result.slack, /SNYK-CC-K8S-123> \(Low\)/);
+});
+
 test("omits empty scan categories and reports when no findings exist", () => {
   const result = formatFindings({
     Code: report({

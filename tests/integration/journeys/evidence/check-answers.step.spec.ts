@@ -22,6 +22,8 @@ describe("Check answers step", () => {
       [`evidence:${applicationId}`]: {
         doYouHaveEvidence: "yes",
         employedEvidence: ["wageSlips"],
+        haveEvidenceOfExpenditure: "yes",
+        haveEvidenceOfCapital: "yes",
         selfEmployedEvidence: [],
         benefitsInKindEvidence: [],
         otherEvidence: [],
@@ -31,6 +33,14 @@ describe("Check answers step", () => {
         incomeEvidence: ["wageSlips", "taxCalculationSheet"],
         housingCostsEvidence: [],
         capitalEvidence: ["bankStatementCapital", "shareCertificate"],
+      },
+    },
+  });
+
+  const incompleteSession = () => ({
+    journeyDrafts: {
+      [`evidence:${applicationId}`]: {
+        doYouHaveEvidence: "yes",
       },
     },
   });
@@ -107,6 +117,19 @@ describe("Check answers step", () => {
       expect(result.type).to.equal("redirect");
       const redirectResult = result as TestRedirectResult;
       expect(redirectResult.url).to.equal(`/cases/${applicationId}/task-list`);
+    });
+
+    it("does not submit if answers are incomplete", async () => {
+      const result = await client.post(
+        `/cases/${applicationId}/evidence/check-answers`,
+        {
+          session: incompleteSession(),
+        },
+      );
+      expect(result.type).to.equal("render");
+      const renderResult = result as TestRenderResult;
+
+      expect(renderResult.context.showValidationFailures).to.equal(true);
     });
   });
 });

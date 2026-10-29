@@ -3,12 +3,13 @@ import { before, describe, it } from "mocha";
 
 import type { EligibilityData } from "#/api/clients/rcw/model/eligibilityData.zod.gen.js";
 
+import { answerCards } from "#tests/unit/src/export/sections/meansAssessment/answers/answers.fixtures.js";
 import { toMeansAssessmentSection } from "#/export/sections/meansAssessment/meansAssessment.mapper.js";
 import { initializeI18nextSync } from "#/lib/i18n.js";
 import { getGetApplicationResponseMock } from "#orval/mocks/rcw/fakers/applications/applications.faker.gen.js";
 
 function summaries(data: EligibilityData) {
-  return toMeansAssessmentSection(
+  const sections = toMeansAssessmentSection(
     getGetApplicationResponseMock({
       eligibility: {
         data: {
@@ -24,6 +25,8 @@ function summaries(data: EligibilityData) {
       meansAssessmentRequired: true,
     }),
   )?.answerSummaries.filter((summary) => summary.heading === "Client details");
+
+  return answerCards(sections);
 }
 
 describe("saved client answers", () => {
@@ -47,9 +50,12 @@ describe("saved client answers", () => {
         }),
       ).to.deep.equal([
         {
-          heading: "Client details",
+          heading: "Client age",
+          rows: [{ key: "What age is your client?", value: display }],
+        },
+        {
+          heading: "Partner and passporting",
           rows: [
-            { key: "What age is your client?", value: display },
             { key: "Does your client have a partner?", value: "No" },
             {
               key: "Does your client receive a passporting benefit?",
@@ -72,9 +78,12 @@ describe("saved client answers", () => {
       }),
     ).to.deep.equal([
       {
-        heading: "Client details",
+        heading: "Client age",
+        rows: [{ key: "What age is your client?", value: "60 or over" }],
+      },
+      {
+        heading: "Partner and passporting",
         rows: [
-          { key: "What age is your client?", value: "60 or over" },
           { key: "Does your client have a partner?", value: "Yes" },
           {
             key: "Does your client receive a passporting benefit?",
@@ -85,22 +94,31 @@ describe("saved client answers", () => {
     ]);
   });
 
-  for (const route of [
-    { client_age: "under_18", controlled_legal_representation: true },
+  for (const { name, route } of [
     {
-      aggregated_means: false,
-      client_age: "under_18",
-      controlled_legal_representation: false,
-      regular_income: false,
-      under_eighteen_assets: false,
+      name: "under-18 controlled legal representation",
+      route: { client_age: "under_18", controlled_legal_representation: true },
     },
     {
-      asylum_support: true,
-      client_age: "standard",
-      immigration_or_asylum: true,
+      name: "under-18 without means or regular income",
+      route: {
+        aggregated_means: false,
+        client_age: "under_18",
+        controlled_legal_representation: false,
+        regular_income: false,
+        under_eighteen_assets: false,
+      },
     },
-  ] satisfies EligibilityData[]) {
-    it("hides stale applicant answers on a non-means-tested route", () => {
+    {
+      name: "asylum support",
+      route: {
+        asylum_support: true,
+        client_age: "standard",
+        immigration_or_asylum: true,
+      },
+    },
+  ] satisfies Array<{ name: string; route: EligibilityData }>) {
+    it(`hides stale applicant answers on the ${name} route`, () => {
       expect(
         summaries({
           ...route,
@@ -110,7 +128,7 @@ describe("saved client answers", () => {
         }),
       ).to.deep.equal([
         {
-          heading: "Client details",
+          heading: "Client age",
           rows: [
             {
               key: "What age is your client?",
@@ -122,24 +140,33 @@ describe("saved client answers", () => {
     });
   }
 
-  for (const route of [
+  for (const { name, route } of [
     {
-      aggregated_means: true,
-      regular_income: false,
-      under_eighteen_assets: false,
+      name: "aggregated means",
+      route: {
+        aggregated_means: true,
+        regular_income: false,
+        under_eighteen_assets: false,
+      },
     },
     {
-      aggregated_means: false,
-      regular_income: true,
-      under_eighteen_assets: false,
+      name: "regular income",
+      route: {
+        aggregated_means: false,
+        regular_income: true,
+        under_eighteen_assets: false,
+      },
     },
     {
-      aggregated_means: false,
-      regular_income: false,
-      under_eighteen_assets: true,
+      name: "under-eighteen assets",
+      route: {
+        aggregated_means: false,
+        regular_income: false,
+        under_eighteen_assets: true,
+      },
     },
-  ] satisfies EligibilityData[]) {
-    it("keeps applicant answers on a means-tested under-eighteen route", () => {
+  ] satisfies Array<{ name: string; route: EligibilityData }>) {
+    it(`keeps applicant answers when ${name} is assessed`, () => {
       expect(
         summaries({
           ...route,
@@ -152,9 +179,12 @@ describe("saved client answers", () => {
         }),
       ).to.deep.equal([
         {
-          heading: "Client details",
+          heading: "Client age",
+          rows: [{ key: "What age is your client?", value: "Under 18" }],
+        },
+        {
+          heading: "Partner and passporting",
           rows: [
-            { key: "What age is your client?", value: "Under 18" },
             { key: "Does your client have a partner?", value: "No" },
             {
               key: "Does your client receive a passporting benefit?",
@@ -166,17 +196,26 @@ describe("saved client answers", () => {
     });
   }
 
-  for (const route of [
-    { asylum_support: true, immigration_or_asylum: false },
-    { asylum_support: false, immigration_or_asylum: true },
+  for (const { name, route } of [
     {
-      aggregated_means: false,
-      controlled_legal_representation: true,
-      regular_income: false,
-      under_eighteen_assets: false,
+      name: "asylum support is active without immigration status",
+      route: { asylum_support: true, immigration_or_asylum: false },
     },
-  ] satisfies EligibilityData[]) {
-    it("ignores inactive exemption answers after route changes", () => {
+    {
+      name: "immigration status is active without asylum support",
+      route: { asylum_support: false, immigration_or_asylum: true },
+    },
+    {
+      name: "the under-eighteen controlled-work route changes",
+      route: {
+        aggregated_means: false,
+        controlled_legal_representation: true,
+        regular_income: false,
+        under_eighteen_assets: false,
+      },
+    },
+  ] satisfies Array<{ name: string; route: EligibilityData }>) {
+    it(`ignores inactive exemption answers when ${name}`, () => {
       expect(
         summaries({
           ...route,
@@ -187,9 +226,12 @@ describe("saved client answers", () => {
         }),
       ).to.deep.equal([
         {
-          heading: "Client details",
+          heading: "Client age",
+          rows: [{ key: "What age is your client?", value: "18 to 59" }],
+        },
+        {
+          heading: "Partner and passporting",
           rows: [
-            { key: "What age is your client?", value: "18 to 59" },
             { key: "Does your client have a partner?", value: "No" },
             {
               key: "Does your client receive a passporting benefit?",

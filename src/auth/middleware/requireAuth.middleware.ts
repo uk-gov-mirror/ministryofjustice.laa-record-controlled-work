@@ -1,6 +1,7 @@
 import type { NextFunction, Request, RequestHandler, Response } from "express";
 
 import { AuthError } from "@azure/msal-node";
+import { promisify } from "node:util";
 
 import { refreshToken } from "#/auth/actions/refreshToken.action.js";
 import { destroySessionAuth } from "#/auth/domain/destroySessionAuth.js";
@@ -8,7 +9,15 @@ import { destroySessionOffice } from "#/auth/domain/destroySessionOffice.js";
 import { EntraErrorCode } from "#/auth/domain/EntraErrorCode.enum.js";
 import { getOfficeClaimsFromSession } from "#/auth/domain/getOfficeClaimsFromSession.js";
 import { updateSessionAuth } from "#/auth/domain/updateSessionAuth.js";
+import { deleteMsalCache, setMsalCacheExpiry } from "#/auth/msal.cache.js";
+import {
+  hasValidLifecycleMetadata,
+  lifecycleExpiresAt,
+  renewLifecycle,
+} from "#/auth/session.lifecycle.js";
+import config from "#/config.js";
 import { FORBIDDEN, HTTP_STATUS } from "#/lib/constants/http.js";
+import { SECOND } from "#/lib/constants/time.js";
 import { logger } from "#/logger.js";
 
 /**
@@ -34,13 +43,15 @@ export function requireAuth(): RequestHandler {
     next: NextFunction,
   ): Promise<void> {
     try {
-      const MS_PER_SECOND = 1000;
-      const NOW = Math.floor(Date.now() / MS_PER_SECOND);
+      const now = Date.now();
+      // JWT expiry claims use seconds, while Date.now() returns milliseconds.
+      const nowInSeconds = Math.floor(now / SECOND);
 
       const { session } = req;
-      const { id: sessionId } = session;
-      const { homeAccountId, idToken } = session.account ?? {};
-      const { exp } = session.account?.idTokenClaims ?? {};
+      const { account, id: sessionId } = session;
+      const { homeAccountId, idToken } = account ?? {};
+      const { exp } = account?.idTokenClaims ?? {};
+      let sessionExpiresAt: number | undefined;
 
       logger.info("requireAuth(): Checking user auth");
 
@@ -48,6 +59,28 @@ export function requireAuth(): RequestHandler {
         logger.info("requireAuth(): Skipping ignored path");
         next();
         return;
+      }
+
+      if (account !== undefined) {
+        if (
+          !hasValidLifecycleMetadata(session, now) ||
+          lifecycleExpiresAt(session) <= now
+        ) {
+          const destroy = promisify(
+            (callback: (error?: Error | null) => void): void => {
+              session.destroy(callback);
+            },
+          );
+          await destroy();
+
+          res.clearCookie(config.session.name);
+          await deleteMsalCache(sessionId);
+          res.redirect("/auth/signin?prompt=login");
+          return;
+        }
+
+        sessionExpiresAt = renewLifecycle(session, now);
+        await setMsalCacheExpiry(sessionId, sessionExpiresAt);
       }
 
       // Does the user have a valid auth token?
@@ -60,9 +93,13 @@ export function requireAuth(): RequestHandler {
       }
 
       // Is the token expired?
-      if (exp === undefined || exp <= NOW) {
+      if (exp === undefined || exp <= nowInSeconds) {
         logger.info("requireAuth(): User auth expired, attempting refresh");
-        const result = await refreshToken(homeAccountId, sessionId);
+        const result = await refreshToken(
+          homeAccountId,
+          sessionId,
+          sessionExpiresAt,
+        );
 
         if (result.error) {
           destroySessionAuth(session);

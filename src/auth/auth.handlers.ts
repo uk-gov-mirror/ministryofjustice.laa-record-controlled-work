@@ -19,6 +19,7 @@ import {
 import {
   authCodeCallbackErrorSchema,
   authCodeCallbackSchema,
+  type LoginPrompt,
 } from "#/auth/auth.types.js";
 import {
   type AuthFlow,
@@ -27,13 +28,16 @@ import {
 } from "#/auth/authCodeFlow/factory.js";
 import { EntraErrorCode } from "#/auth/domain/EntraErrorCode.enum.js";
 import { EntraService } from "#/auth/entra.service.js";
-import { getMsalCacheKey } from "#/auth/msal.cache-key.js";
+import { deleteMsalCache } from "#/auth/msal.cache.js";
+import {
+  SESSION_IDLE_TIMEOUT_MS,
+  setLifecycle,
+} from "#/auth/session.lifecycle.js";
 import config from "#/config.js";
 import {
   FORBIDDEN,
   PRIVATE_NO_STORE_CACHE_CONTROL,
 } from "#/lib/constants/http.js";
-import { getRedisClient } from "#/lib/redis.js";
 import { logger } from "#/logger.js";
 
 const EMPTY_STRING_LENGTH = 0;
@@ -114,9 +118,10 @@ export async function signIn(
     req.query.returnTo === undefined
       ? getValidatedReturnTo(req.session.returnTo)
       : getValidatedReturnTo(req.query.returnTo);
+  const prompt = req.query.prompt === "login" ? "login" : undefined;
 
   try {
-    const authCodeUrl = await prepareSignInFlow(req, returnTo);
+    const authCodeUrl = await prepareSignInFlow(req, returnTo, prompt);
     res.redirect(authCodeUrl);
   } catch (error) {
     if (
@@ -188,7 +193,11 @@ async function completeAuthCodeCallback(
   flow: AuthFlow,
 ): Promise<void> {
   await regenerateSession(req);
-  const entra = EntraService.create({ sessionId: req.sessionID });
+  const authenticatedAt = Date.now();
+  const entra = EntraService.create({
+    cacheExpiresAt: authenticatedAt + SESSION_IDLE_TIMEOUT_MS,
+    sessionId: req.sessionID,
+  });
   const result = await entra.exchangeAuthCode(data.code, flow.authCodeRequest);
 
   if (result.error) {
@@ -209,20 +218,10 @@ async function completeAuthCodeCallback(
     isAuthenticated: true,
     msal: { homeAccountId },
   });
+  setLifecycle(req.session, authenticatedAt);
   if (!(await persistAuthenticatedSession(req, res))) return;
 
   res.redirect(getValidatedReturnTo(flow.returnTo));
-}
-
-/**
- * Deletes MSAL session cache from Redis when enabled.
- * @param sessionId - The express-session ID.
- */
-async function deleteMsalCache(sessionId: string): Promise<void> {
-  if (!config.redis.enabled) return;
-
-  const key = getMsalCacheKey(sessionId);
-  await getRedisClient().del(key);
 }
 
 /**
@@ -358,11 +357,13 @@ async function persistAuthenticatedSession(
  * Prepares a flow and authorizes its IdP redirect only while its reservation is current.
  * @param req - The initiating request.
  * @param returnTo - The validated local destination to persist in the flow.
+ * @param prompt - Optional Entra authentication prompt.
  * @returns The prepared IdP authorization URL.
  */
 async function prepareSignInFlow(
   req: Request,
   returnTo: string,
+  prompt?: LoginPrompt,
 ): Promise<string> {
   const flowStore = getRequestAuthFlowStore(req.app);
   const reservation = await flowStore.reserve(req.sessionID);
@@ -376,6 +377,7 @@ async function prepareSignInFlow(
     const result = await entra.initiateAuthCodeFlow(returnTo, {
       callbackHostname: req.hostname,
       expiresAt,
+      prompt,
     });
     if (result.error) throw result.error;
 

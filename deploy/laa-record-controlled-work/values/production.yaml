@@ -2,7 +2,7 @@ serviceAccount:
   name: rcw-github-action-service-account
 
 ingress:
-  className: default
+  className: modsec
   hosts:
     - host: record-controlled-work.service.justice.gov.uk
       paths:

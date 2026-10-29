@@ -4,16 +4,35 @@ import { expect } from "chai";
 import sinon from "sinon";
 
 import { TokenCacheContext } from "@azure/msal-node";
-import { getMsalCacheKey } from "#/auth/msal.cache-key.js";
+import { MsalCacheWithoutExpiringSessionError } from "#/auth/auth.errors.js";
+import { getMsalCacheKey } from "#/auth/msal.cache.js";
+import { MINUTE } from "#/lib/constants/time.js";
 import { RedisCachePlugin } from "#/auth/msal.plugin.js";
 describe("CachePlugin", () => {
   describe("Redis", () => {
     const SESSION_ID = "test-session-id-123";
     const OTHER_SESSION_ID = "other-session-id-456";
-    const TTL_SECONDS = 3600;
     const CACHE_KEY = getMsalCacheKey(SESSION_ID);
     const OTHER_CACHE_KEY = getMsalCacheKey(OTHER_SESSION_ID);
     const SERIALIZED_CACHE = "serialized-cache-blob";
+
+    function createObservableCacheContext(): {
+      context: TokenCacheContext;
+      getCachedValue: () => string | undefined;
+    } {
+      let cachedValue: string | undefined;
+      const context = {
+        cacheHasChanged: false,
+        tokenCache: {
+          deserialize: (value: string) => {
+            cachedValue = value;
+          },
+          serialize: () => cachedValue ?? SERIALIZED_CACHE,
+        },
+      } as unknown as TokenCacheContext;
+
+      return { context, getCachedValue: () => cachedValue };
+    }
 
     let redisStub: sinon.SinonStubbedInstance<RedisClientType>;
     let plugin: RedisCachePlugin;
@@ -26,10 +45,12 @@ describe("CachePlugin", () => {
       redisStub = {
         expire: sinon.stub(),
         get: sinon.stub(),
+        pExpireAt: sinon.stub(),
+        pExpireTime: sinon.stub(),
         set: sinon.stub(),
       } as sinon.SinonStubbedInstance<RedisClientType>;
 
-      plugin = new RedisCachePlugin(redisStub, SESSION_ID, TTL_SECONDS);
+      plugin = new RedisCachePlugin(redisStub, SESSION_ID);
 
       cacheContextStub = {
         cacheHasChanged: false,
@@ -57,19 +78,17 @@ describe("CachePlugin", () => {
         expect(callArg).to.include(SESSION_ID);
       });
       
-      it("should not deserialize when Redis returns no cached value", async () => {
+      it("leaves the token cache empty when Redis has no cached value", async () => {
+        const observableCache = createObservableCacheContext();
         redisStub.get.resolves(null);
 
-        await plugin.beforeCacheAccess(
-          cacheContextStub as unknown as TokenCacheContext,
-        );
+        await plugin.beforeCacheAccess(observableCache.context);
 
-        expect(redisStub.get.calledWith(CACHE_KEY)).to.be.true;
-        expect(cacheContextStub.tokenCache.deserialize.called).to.be.false;
+        expect(observableCache.getCachedValue()).to.be.undefined;
         expect(redisStub.expire.called).to.be.false;
       });
 
-      it("should deserialize when Redis cache hit", async () => {
+      it("does not renew cache expiry when no deadline is configured", async () => {
         redisStub.get.resolves(SERIALIZED_CACHE);
 
         await plugin.beforeCacheAccess(
@@ -80,63 +99,43 @@ describe("CachePlugin", () => {
         expect(
           cacheContextStub.tokenCache.deserialize.calledWith(SERIALIZED_CACHE),
         ).to.be.true;
-        expect(redisStub.expire.calledWith(CACHE_KEY, TTL_SECONDS)).to.be.true;
+        expect(redisStub.expire.called).to.be.false;
       });
 
-      it("should read from Redis using session ID key", async () => {
-        redisStub.get.resolves(null);
+      it("uses the authenticated session deadline when refreshing cache expiry", async () => {
+        const cacheExpiresAt = Date.now() + 30 * MINUTE;
+        const deadlinePlugin = new RedisCachePlugin(
+          redisStub,
+          SESSION_ID,
+          cacheExpiresAt,
+        );
+        redisStub.get.resolves(SERIALIZED_CACHE);
 
-        await plugin.beforeCacheAccess(
+        await deadlinePlugin.beforeCacheAccess(
           cacheContextStub as unknown as TokenCacheContext,
         );
 
-        expect(redisStub.get.calledWith(CACHE_KEY)).to.be.true;
+        expect(
+          redisStub.pExpireAt.calledOnceWithExactly(CACHE_KEY, cacheExpiresAt),
+        ).to.be.true;
       });
 
-      it("should isolate cache partitions between different session IDs", async () => {
+      it("keeps cached values isolated between session IDs", async () => {
         const otherPlugin = new RedisCachePlugin(
           redisStub,
           OTHER_SESSION_ID,
-          TTL_SECONDS,
         );
-
-        const thisSessionContext = {
-          cacheHasChanged: false,
-          tokenCache: {
-            deserialize: sinon.stub(),
-            serialize: sinon.stub(),
-          },
-        };
-        const otherSessionContext = {
-          cacheHasChanged: false,
-          tokenCache: {
-            deserialize: sinon.stub(),
-            serialize: sinon.stub(),
-          },
-        };
+        const thisSessionCache = createObservableCacheContext();
+        const otherSessionCache = createObservableCacheContext();
 
         redisStub.get.withArgs(CACHE_KEY).resolves(SERIALIZED_CACHE);
         redisStub.get.withArgs(OTHER_CACHE_KEY).resolves("other-serialized");
 
-        await plugin.beforeCacheAccess(
-          thisSessionContext as unknown as TokenCacheContext,
-        );
-        await otherPlugin.beforeCacheAccess(
-          otherSessionContext as unknown as TokenCacheContext,
-        );
+        await plugin.beforeCacheAccess(thisSessionCache.context);
+        await otherPlugin.beforeCacheAccess(otherSessionCache.context);
 
-        expect(redisStub.get.calledWith(CACHE_KEY)).to.be.true;
-        expect(redisStub.get.calledWith(OTHER_CACHE_KEY)).to.be.true;
-        expect(
-          thisSessionContext.tokenCache.deserialize.calledOnceWithExactly(
-            SERIALIZED_CACHE,
-          ),
-        ).to.be.true;
-        expect(
-          otherSessionContext.tokenCache.deserialize.calledOnceWithExactly(
-            "other-serialized",
-          ),
-        ).to.be.true;
+        expect(thisSessionCache.getCachedValue()).to.equal(SERIALIZED_CACHE);
+        expect(otherSessionCache.getCachedValue()).to.equal("other-serialized");
       });
     });
 
@@ -151,8 +150,10 @@ describe("CachePlugin", () => {
         expect(redisStub.set.called).to.be.false;
       });
 
-      it("should write serialized cache to Redis when cache has changed", async () => {
+      it("persists changed cache with its Redis expiry", async () => {
         cacheContextStub.cacheHasChanged = true;
+        const cacheExpiresAt = Date.now() + 30 * MINUTE;
+        redisStub.pExpireTime.resolves(cacheExpiresAt);
         redisStub.set.resolves(null);
 
         await plugin.afterCacheAccess(
@@ -160,21 +161,58 @@ describe("CachePlugin", () => {
         );
 
         expect(
-          redisStub.set.calledWith(CACHE_KEY, SERIALIZED_CACHE, {
-            EX: TTL_SECONDS,
+          redisStub.pExpireTime.calledOnceWithExactly(CACHE_KEY),
+        ).to.be.true;
+        expect(
+          redisStub.set.calledOnceWithExactly(CACHE_KEY, SERIALIZED_CACHE, {
+            PXAT: cacheExpiresAt,
           }),
         ).to.be.true;
       });
 
-      it("should serialize the cache before persisting", async () => {
+      it("does not persist changed cache without an existing expiry", async () => {
         cacheContextStub.cacheHasChanged = true;
+        redisStub.pExpireTime.resolves(-2);
+
+        let error: unknown;
+        try {
+          await plugin.afterCacheAccess(
+            cacheContextStub as unknown as TokenCacheContext,
+          );
+        } catch (caught) {
+          error = caught;
+        }
+
+        expect(error).to.be.instanceOf(MsalCacheWithoutExpiringSessionError);
+        expect(error).to.have.property(
+          "message",
+          "Cannot persist MSAL cache without an expiring session",
+        );
+        expect(redisStub.set.called).to.be.false;
+      });
+
+      it("uses the authenticated session deadline without querying Redis", async () => {
+        cacheContextStub.cacheHasChanged = true;
+        const cacheExpiresAt = Date.now() + 30 * MINUTE;
+        const deadlinePlugin = new RedisCachePlugin(
+          redisStub,
+          SESSION_ID,
+          cacheExpiresAt,
+        );
         redisStub.set.resolves(null);
 
-        await plugin.afterCacheAccess(
+        await deadlinePlugin.afterCacheAccess(
           cacheContextStub as unknown as TokenCacheContext,
         );
 
-        expect(cacheContextStub.tokenCache.serialize.called).to.be.true;
+        expect(redisStub.pExpireTime.called).to.be.false;
+        expect(
+          redisStub.set.calledOnceWithExactly(
+            CACHE_KEY,
+            SERIALIZED_CACHE,
+            { PXAT: cacheExpiresAt },
+          ),
+        ).to.be.true;
       });
     });
   });
