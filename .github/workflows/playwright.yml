@@ -82,6 +82,7 @@ jobs:
           NODE_ENV: "test"
           SESSION_SECRET: "playwright-test-secret"
           SESSION_ENCRYPTION_KEY: "playwright-test-encryption-key"
+          SENTRY_DSN: ""
 
       - name: Upload trace artifacts
         if: always()
@@ -144,6 +145,7 @@ jobs:
           NODE_ENV: "test"
           SESSION_SECRET: "accessibility-test-secret"
           SESSION_ENCRYPTION_KEY: "accessibility-test-encryption-key"
+          SENTRY_DSN: ""
 
       - name: Upload Accessibility Report
         if: always()

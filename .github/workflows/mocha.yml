@@ -33,6 +33,7 @@ jobs:
           NODE_ENV: "test"
           SESSION_SECRET: "mocha-test-secret"
           SESSION_ENCRYPTION_KEY: "mocha-test-encryption-key"
+          SENTRY_DSN: ""
 
       - name: Upload coverage artifact
         if: always()
@@ -65,3 +66,4 @@ jobs:
           NODE_ENV: "test"
           SESSION_SECRET: "mocha-test-secret"
           SESSION_ENCRYPTION_KEY: "mocha-test-encryption-key"
+          SENTRY_DSN: ""
