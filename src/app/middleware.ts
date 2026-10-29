@@ -11,6 +11,7 @@ import { cspNonce } from "#/app/middleware/cspNonce.middleware.js";
 import { addCsrfToLocals, csrf } from "#/app/middleware/csrf.middleware.js";
 import { helmet } from "#/app/middleware/helmet.middleware.js";
 import { locale } from "#/app/middleware/locale.middleware.js";
+import { requestLogger } from "#/app/middleware/requestLogger.middleware.js";
 import {
   createBrowserSentryOptions,
   setupSentry,
@@ -43,6 +44,9 @@ export async function initMiddleware(
 
   // Resolve the correlation ID first so every later log and API call carries it.
   app.use(correlationId());
+
+  // Request-scoped logger (`req.log`) tagged with the correlation ID.
+  app.use(requestLogger());
 
   // Parse cookies and adds them to `req.cookies`.
   app.use(cookieParser());
