@@ -35,7 +35,6 @@ export const createGetExportHandler =
 
     const result = await loadApplicationForExport(deps, {
       applicationId: parsedParams.data.applicationId,
-      correlationId: req.get("x-correlation-id"),
       homeAccountId: req.session.msal?.homeAccountId,
       selectedOfficeCode: req.session.selectedOffice?.code,
       sessionId: req.sessionID,

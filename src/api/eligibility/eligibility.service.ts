@@ -43,12 +43,11 @@ export async function loadEligibilityAssessment(
     EligibilityAssessment
   >
 > {
-  const { applicationId, correlationId, homeAccountId, sessionId } = params;
+  const { applicationId, homeAccountId, sessionId } = params;
 
   let response;
   try {
     const opts = await getRcwApiDefaultOptions({
-      correlationId,
       homeAccountId,
       sessionId,
     });
@@ -122,20 +121,14 @@ export async function saveEligibilityAssessment(
 ): Promise<
   Either<NotAuthenticatedError | SaveEligibilityAssessmentError, void>
 > {
-  const {
-    applicationId,
-    correlationId,
-    eligibilityAssessment,
-    homeAccountId,
-    sessionId,
-  } = params;
+  const { applicationId, eligibilityAssessment, homeAccountId, sessionId } =
+    params;
 
   const { data, result } = splitEligibilityAssessment(eligibilityAssessment);
 
   let response;
   try {
     const opts = await getRcwApiDefaultOptions({
-      correlationId,
       homeAccountId,
       sessionId,
     });

@@ -18,7 +18,6 @@ export interface LoadEligibilityAssessmentDeps {
 
 export interface LoadEligibilityAssessmentParams {
   applicationId: string;
-  correlationId?: string;
   homeAccountId: string | undefined;
   sessionId: string | undefined;
 }
@@ -43,7 +42,6 @@ export interface SaveEligibilityAssessmentDeps {
 
 export interface SaveEligibilityAssessmentParams {
   applicationId: string;
-  correlationId?: string;
   eligibilityAssessment: EligibilityData;
   homeAccountId: string | undefined;
   sessionId: string | undefined;

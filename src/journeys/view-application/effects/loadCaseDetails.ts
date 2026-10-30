@@ -32,12 +32,7 @@ export const loadCaseDetails =
         throw new Error("applicationID parameter is required");
       }
 
-      const correlationId = context
-        .getRequestHeader("x-correlation-id")
-        ?.toString();
-
       const opts = await getRcwApiDefaultOptions({
-        correlationId,
         homeAccountId: session?.msal?.homeAccountId,
         sessionId: session?.id,
       });

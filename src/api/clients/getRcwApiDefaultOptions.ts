@@ -1,10 +1,10 @@
 import { NotAuthenticatedError } from "#/auth/auth.errors.js";
 import { EntraService } from "#/auth/entra.service.js";
 import config from "#/config.js";
+import { getCorrelationId } from "#/lib/requestContext.js";
 import { logger } from "#/logger.js";
 
 export interface RcwApiAuthParams {
-  correlationId?: string;
   homeAccountId: string | undefined;
   sessionId: string | undefined;
 }
@@ -12,21 +12,17 @@ export interface RcwApiAuthParams {
 const EMPTY_STRING_LENGTH = 0;
 const TEST_ACCESS_TOKEN = "test-access-token";
 
-
 /**
- * Builds default authenticated options for downstream RCW API requests.
+ * Builds authenticated RCW API options with correlation from the request context.
  * @param params - Explicit auth context required to build RCW API auth headers.
- * @returns API request options with the Authorization bearer token header.
+ * @returns API request options with auth and, when available, correlation headers.
  */
 export async function getRcwApiDefaultOptions(
   params: RcwApiAuthParams,
 ): Promise<RequestInit> {
   const correlationHeaders: Record<string, string> = {};
-  const correlationId = params.correlationId?.trim();
-  if (
-    correlationId !== undefined &&
-    correlationId.length !== EMPTY_STRING_LENGTH
-  ) {
+  const correlationId = getCorrelationId();
+  if (correlationId !== undefined) {
     correlationHeaders["X-Correlation-Id"] = correlationId;
   }
 

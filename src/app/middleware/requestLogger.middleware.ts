@@ -9,6 +9,6 @@ import { runWithRequestContext } from "#/lib/requestContext.js";
  */
 export function requestLogger(): RequestHandler {
   return (req: Request, _res: Response, next: NextFunction): void => {
-    runWithRequestContext({ correlationId: req.correlationId }, next);
+    runWithRequestContext({ correlationId: String(req.correlationId) }, next);
   };
 }

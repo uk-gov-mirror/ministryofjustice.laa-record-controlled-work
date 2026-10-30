@@ -11,6 +11,7 @@ import type {
   EditApplicationEffectsDeps,
 } from "#/journeys/edit-application/editApplication.types.js";
 import { JourneyCode } from "#/journeys/JourneyCode.enum.js";
+import { runWithRequestContext } from "#/lib/requestContext.js";
 import { logger } from "#/logger.js";
 import { createValidApplicationAnswers } from "#tests/fixtures/application.fixtures.js";
 
@@ -97,7 +98,6 @@ describe("updateClientDetails", () => {
     };
     context = {
       getData: sinon.stub().returns({ providerOfficeCode: "test-office" }),
-      getRequestHeader: sinon.stub().returns("test-correlation-id"),
       getRequestParam: sinon.stub().returns(applicationId),
       getSession: sinon.stub().returns(session),
     } as unknown as EditApplicationContext;
@@ -113,7 +113,10 @@ describe("updateClientDetails", () => {
       headers: new Headers(),
     });
 
-    await updateClientDetails(deps)(context, journeyCode);
+    await runWithRequestContext(
+      { correlationId: "test-correlation-id" },
+      async () => await updateClientDetails(deps)(context, journeyCode),
+    );
 
     expect(updateApplicationDetailsStub.calledOnce).to.equal(true);
     expect(updateApplicationDetailsStub.firstCall.args[0]).to.equal(

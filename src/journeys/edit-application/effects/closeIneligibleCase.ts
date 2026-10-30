@@ -25,10 +25,6 @@ export const closeIneligibleCase =
       throw new Error("applicationID parameter is required");
     }
 
-    const correlationId = context
-      .getRequestHeader("x-correlation-id")
-      ?.toString();
-
     let eTag: number;
     try {
       eTag = parseApplicationVersion(
@@ -39,7 +35,6 @@ export const closeIneligibleCase =
         "Cannot close ineligible case with an invalid application ETag",
         error,
         {
-          correlationId,
           reason:
             error instanceof Error
               ? error.message
@@ -51,7 +46,6 @@ export const closeIneligibleCase =
 
     const session = context.getSession();
     const options = await getRcwApiDefaultOptions({
-      correlationId,
       homeAccountId: session?.msal?.homeAccountId,
       sessionId: session?.id,
     });

@@ -103,11 +103,7 @@ export const updateClientDetails =
       const application = context.getData(CONTEXT_DATA_KEYS.application);
       const requestBody = buildDetailsRequestBody(journeyAnswers, application);
 
-      const correlationId = context
-        .getRequestHeader("x-correlation-id")
-        ?.toString();
       const options = await getRcwApiDefaultOptions({
-        correlationId,
         homeAccountId: session.msal?.homeAccountId,
         sessionId: session.id,
       });

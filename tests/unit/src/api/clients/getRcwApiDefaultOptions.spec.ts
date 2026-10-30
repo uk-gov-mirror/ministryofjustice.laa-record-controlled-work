@@ -10,6 +10,7 @@ import { NotAuthenticatedError } from "#/auth/auth.errors.js";
 import { EntraService } from "#/auth/entra.service.js";
 import config from "#/config.js";
 import { failure, success } from "#/lib/either.js";
+import { runWithRequestContext } from "#/lib/requestContext.js";
 import { logger } from "#/logger.js";
 
 const ORIGINAL_NODE_ENV = process.env.NODE_ENV;
@@ -19,19 +20,15 @@ const CORRELATION_ID = "test-correlation-id";
 
 let useMockAccessTokenStub: sinon.SinonStub;
 
-
 function createParams(
   overrides: Partial<RcwApiAuthParams> = {},
 ): RcwApiAuthParams {
   return {
-    correlationId: CORRELATION_ID,
     homeAccountId: HOME_ACCOUNT_ID,
     sessionId: SESSION_ID,
     ...overrides,
   };
 }
-
-
 
 afterEach(() => {
   sinon.restore();
@@ -45,41 +42,46 @@ afterEach(() => {
 });
 
 describe("getRcwApiDefaultOptions", () => {
-beforeEach(() => {
-  useMockAccessTokenStub = sinon
-    .stub(config.api, "useMockAccessToken")
-    .value(false);
-});
-
-it("returns the bearer Authorization header without a correlation ID", async () => {
-  useMockAccessTokenStub.value(true);
-
-  const options = await getRcwApiDefaultOptions(createParams({correlationId: undefined}));
-
-  expect(options.headers).to.deep.equal({
-    Authorization: "Bearer test-access-token",
+  beforeEach(() => {
+    useMockAccessTokenStub = sinon
+      .stub(config.api, "useMockAccessToken")
+      .value(false);
   });
-});
 
-it("includes the correlation ID header when provided", async () => {
-  useMockAccessTokenStub.value(true);
+  it("returns the bearer Authorization header without a correlation ID", async () => {
+    useMockAccessTokenStub.value(true);
 
-  const options = await getRcwApiDefaultOptions(
-    createParams({ correlationId: CORRELATION_ID }),
-  );
+    const options = await getRcwApiDefaultOptions(createParams());
 
-  expect(options.headers).to.deep.equal({
-    Authorization: "Bearer test-access-token",
-    "X-Correlation-Id": CORRELATION_ID,
+    expect(options.headers).to.deep.equal({
+      Authorization: "Bearer test-access-token",
+    });
   });
-});
+
+  it("includes the correlation ID header from async context", async () => {
+    useMockAccessTokenStub.value(true);
+
+    const options = await runWithRequestContext(
+      { correlationId: CORRELATION_ID },
+      async () => {
+        await Promise.resolve();
+        return await getRcwApiDefaultOptions(createParams());
+      },
+    );
+
+    expect(options.headers).to.deep.equal({
+      Authorization: "Bearer test-access-token",
+      "X-Correlation-Id": CORRELATION_ID,
+    });
+  });
 
   it("returns a bearer Authorization header in test environment", async () => {
     process.env.NODE_ENV = "test";
     useMockAccessTokenStub.value(true);
 
-    const options = await getRcwApiDefaultOptions(
-      createParams({ correlationId: CORRELATION_ID }),
+    const options = await runWithRequestContext(
+      { correlationId: CORRELATION_ID },
+      async () => await getRcwApiDefaultOptions(createParams()),
     );
 
     expect(options.headers).to.deep.equal({
@@ -130,11 +132,13 @@ it("includes the correlation ID header when provided", async () => {
       acquireDownstreamAccessToken,
     } as unknown as EntraService);
 
-    const options = await getRcwApiDefaultOptions(
-      createParams(),
+    const options = await runWithRequestContext(
+      { correlationId: CORRELATION_ID },
+      async () => await getRcwApiDefaultOptions(createParams()),
     );
 
-    expect(createStub.calledOnceWithExactly({ sessionId: SESSION_ID })).to.be.true;
+    expect(createStub.calledOnceWithExactly({ sessionId: SESSION_ID })).to.be
+      .true;
     expect(
       acquireDownstreamAccessToken.calledOnceWithExactly(
         HOME_ACCOUNT_ID,
@@ -145,6 +149,42 @@ it("includes the correlation ID header when provided", async () => {
       Authorization: "Bearer downstream-access-token",
       "X-Correlation-Id": CORRELATION_ID,
     });
+  });
+
+  it("keeps outgoing headers isolated between concurrent request contexts", async () => {
+    useMockAccessTokenStub.value(true);
+    let releaseFirst: () => void = () => {};
+    const firstCanContinue = new Promise<void>((resolve) => {
+      releaseFirst = resolve;
+    });
+
+    const firstRequest = runWithRequestContext(
+      { correlationId: "first-request" },
+      async () => {
+        await firstCanContinue;
+        return await getRcwApiDefaultOptions(createParams());
+      },
+    );
+    const secondRequest = runWithRequestContext(
+      { correlationId: "second-request" },
+      async () => {
+        const options = await getRcwApiDefaultOptions(createParams());
+        releaseFirst();
+        return options;
+      },
+    );
+    const [first, second] = await Promise.all([firstRequest, secondRequest]);
+
+    expect(new Headers(first.headers).get("X-Correlation-Id")).to.equal(
+      "first-request",
+    );
+    expect(new Headers(second.headers).get("X-Correlation-Id")).to.equal(
+      "second-request",
+    );
+    const outside = await getRcwApiDefaultOptions(createParams());
+    expect(new Headers(outside.headers).has("X-Correlation-Id")).to.equal(
+      false,
+    );
   });
 
   it("propagates reauthentication outcome from EntraService", async () => {

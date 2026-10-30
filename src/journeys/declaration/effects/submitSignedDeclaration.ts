@@ -30,9 +30,6 @@ export const submitSignedDeclaration =
     const applicationId = context.getRequestParam(PARAMS_KEYS.applicationID);
     const confirmed = context.getAnswer(A.DECLARATION_SIGNED_CONFIRM);
     const date = context.getAnswer(A.DECLARATION_SIGNED_DATE);
-    const correlationId = context
-      .getRequestHeader("x-correlation-id")
-      ?.toString();
 
     if (applicationId === undefined) {
       logger.error("Missing applicationId in request parameters");
@@ -59,7 +56,6 @@ export const submitSignedDeclaration =
       };
 
       const opts = await getRcwApiDefaultOptions({
-        correlationId,
         homeAccountId: session.msal?.homeAccountId,
         sessionId: session.id,
       });

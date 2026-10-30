@@ -7,6 +7,7 @@ import type {
   EditApplicationEffectsDeps,
 } from "#/journeys/edit-application/editApplication.types.js";
 import { logger } from "#/logger.js";
+import { runWithRequestContext } from "#/lib/requestContext.js";
 import { getGetApplicationResponseMock } from "#orval/mocks/rcw/fakers/applications/applications.faker.gen.js";
 import { ApiResponseError } from "#/api/clients/api.errors.js";
 import { submitApplication } from "#/journeys/edit-application/effects/submitApplication.js";
@@ -22,7 +23,6 @@ describe("submitApplication", () => {
   let deps: EditApplicationEffectsDeps;
   let getSession: sinon.SinonStub;
   let getData: sinon.SinonStub;
-  let getRequestHeader: sinon.SinonStub;
 
   beforeEach(() => {
     sinon.stub(config.api, "useMockAccessToken").value(true);
@@ -39,12 +39,9 @@ describe("submitApplication", () => {
       msal: { homeAccountId: "home-account-id" },
     });
 
-    getRequestHeader = sinon.stub().returns("test-correlation-id"),
-
     context = {
       getSession,
       getData,
-      getRequestHeader,
     } as unknown as EditApplicationContext;
   });
 
@@ -59,7 +56,10 @@ describe("submitApplication", () => {
     updateApplicationStatusStub.resolves({
       status: 204,
     });
-    await submitApplication(deps)(context);
+    await runWithRequestContext(
+      { correlationId: "test-correlation-id" },
+      async () => await submitApplication(deps)(context),
+    );
 
     expect(
       updateApplicationStatusStub.calledOnceWith(
@@ -70,7 +70,7 @@ describe("submitApplication", () => {
             Authorization: "Bearer test-access-token",
             "X-Correlation-Id": "test-correlation-id",
           },
-        }
+        },
       ),
     ).to.equal(true);
   });

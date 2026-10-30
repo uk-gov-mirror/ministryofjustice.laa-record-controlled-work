@@ -4,8 +4,10 @@ import * as Sentry from "@sentry/node";
 import { Router } from "express";
 import request from "supertest";
 
+import { getRcwApiDefaultOptions } from "#/api/clients/getRcwApiDefaultOptions.js";
 import { correlationId } from "#/app/middleware/correlationId.middleware.js";
 import { requestLogger } from "#/app/middleware/requestLogger.middleware.js";
+import config from "#/config.js";
 import { INTERNAL_SERVER_ERROR, OK } from "#/lib/constants/http.js";
 import { getCorrelationId } from "#/lib/requestContext.js";
 import { logger } from "#/logger.js";
@@ -61,13 +63,20 @@ describe("requestLogger middleware", () => {
   });
 
   for (const incoming of ["incoming-id", undefined]) {
-    it(`correlates shared logger calls with the response when the header is ${incoming === undefined ? "missing" : "present"}`, async () => {
+    it(`correlates logs and outgoing RCW headers with the response when the header is ${incoming === undefined ? "missing" : "present"}`, async () => {
       const sentryLog = sinon.stub(Sentry.logger, "info");
+      sinon.stub(config.api, "useMockAccessToken").value(true);
+      let outgoingId: null | string = null;
       const router = Router();
       router.use(correlationId(), requestLogger());
       router.get("/", async (_req, res) => {
         await Promise.resolve();
         logger.info("request.handled");
+        const options = await getRcwApiDefaultOptions({
+          homeAccountId: undefined,
+          sessionId: undefined,
+        });
+        outgoingId = new Headers(options.headers).get("X-Correlation-Id");
         res.sendStatus(OK);
       });
       const app = createMockApp({ router, useCsrf: false });
@@ -84,6 +93,7 @@ describe("requestLogger middleware", () => {
       }
       expect(sentryLog.calledOnce).to.equal(true);
       expect(sentryLog.firstCall.args[1]).to.include({ correlationId: id });
+      expect(outgoingId).to.equal(id);
       expect(getCorrelationId()).to.equal(undefined);
     });
   }
