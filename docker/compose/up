@@ -104,7 +104,9 @@ clone_if_missing() {
 clone_if_missing "$API_DIR" laa-record-controlled-work-api
 clone_if_missing "$DATASTORE_DIR" laa-info-and-advice-datastore
 clone_if_missing "$CCQ_DIR" laa-check-client-qualifies
-clone_if_missing "$CFE_DIR" cfe-civil
+if [[ "$CI_MODE" != true ]]; then
+  clone_if_missing "$CFE_DIR" cfe-civil
+fi
 
 ensure_env_file() {
   local dir="$1" file="$2" example="$3"
