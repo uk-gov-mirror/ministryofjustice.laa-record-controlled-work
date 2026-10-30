@@ -22,6 +22,7 @@ import { editApplicationJourney } from "#/journeys/edit-application/editApplicat
 import { editApplicationTransformersRegistry } from "#/journeys/edit-application/editApplication.transformers.js";
 import { evidenceEffectsRegistry } from "#/journeys/evidence/evidence.effects.js";
 import { getGetApplicationResponseMock } from "#orval/mocks/rcw/fakers/applications/applications.faker.gen.js";
+import { declarationEffectRegistry } from "#/journeys/declaration/declaration.effects.js";
 
 /**
  * Creates an integration test client from a journey definition.
@@ -42,11 +43,14 @@ export function createForgeTestClient<TDeps>(
   },
 ): ForgeTestClient {
 
-
-  sourceJourney.reachability = {
-    disableReachabilityChecks:
-      overrides?.disableReachabilityChecks ?? true,
+  // Disable reachability checks for the journey and its children
+  const disableChecks = (journey: JourneyDefinition): void => {
+    journey.reachability = {
+      disableReachabilityChecks: overrides?.disableReachabilityChecks ?? true,
+    };
+    journey.children?.forEach(disableChecks);
   };
+  disableChecks(sourceJourney);
 
   const testPackage = createTestPackage(
     createForgePackage({
@@ -68,18 +72,19 @@ export function createForgeTestClient<TDeps>(
     .createClient(overrides?.renderer);
 }
 
-export function createEvidenceJourneyTestClient(
+export function createEditApplicationJourneyTestClient(
   dependencies: Partial<EditApplicationEffectsDeps> = {},
 ): ForgeTestClient {
   const application = getGetApplicationResponseMock({ evidence: null });
 
   return createForgeTestClient(
     editApplicationJourney,
-    [editApplicationEffectsRegistry, evidenceEffectsRegistry],
+    [editApplicationEffectsRegistry, evidenceEffectsRegistry, declarationEffectRegistry],
     {
-      additionalFunctions: [editApplicationTransformersRegistry],
+      additionalFunctions: [editApplicationTransformersRegistry, ],
       dependencies: {
         getApplication: async () => ({ status: 200, data: application }),
+        updateApplicationDeclaration: async () => ({ status: 204 }),
         updateApplicationDetails: async () => ({ status: 204 }),
         updateApplicationEvidence: async () => ({ status: 204 }),
         updateApplicationStatus: async () => ({ status: 204 }),

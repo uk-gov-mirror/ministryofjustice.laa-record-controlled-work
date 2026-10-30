@@ -4,6 +4,7 @@ import type { Application } from "#/api/clients/rcw/model/application.zod.gen.js
 import type { ApplicationState } from "#/api/clients/rcw/model/applicationState.zod.gen.js";
 import type {
   getApplication,
+  updateApplicationDeclaration,
   updateApplicationDetails,
   updateApplicationEvidence,
   updateApplicationStatus,
@@ -32,6 +33,7 @@ export interface EditApplicationData extends Record<string, unknown> {
 
 export interface EditApplicationEffectsDeps {
   getApplication: typeof getApplication;
+  updateApplicationDeclaration: typeof updateApplicationDeclaration;
   updateApplicationDetails: typeof updateApplicationDetails;
   updateApplicationEvidence: typeof updateApplicationEvidence;
   updateApplicationStatus: typeof updateApplicationStatus;

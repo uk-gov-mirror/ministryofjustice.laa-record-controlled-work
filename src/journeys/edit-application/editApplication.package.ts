@@ -2,6 +2,7 @@ import { createForgePackage } from "@ministryofjustice/hmpps-forge/core/authorin
 
 import type { EditApplicationEffectsDeps } from "#/journeys/edit-application/editApplication.types.js";
 
+import { declarationEffectRegistry } from "#/journeys/declaration/declaration.effects.js";
 import { editApplicationEffectsRegistry } from "#/journeys/edit-application/editApplication.effects.js";
 import { editApplicationJourney } from "#/journeys/edit-application/editApplication.journey.js";
 import { editApplicationTransformersRegistry } from "#/journeys/edit-application/editApplication.transformers.js";
@@ -13,6 +14,7 @@ export const editApplicationPackage =
       editApplicationEffectsRegistry,
       editApplicationTransformersRegistry,
       evidenceEffectsRegistry,
+      declarationEffectRegistry,
     ],
     journey: editApplicationJourney,
   });

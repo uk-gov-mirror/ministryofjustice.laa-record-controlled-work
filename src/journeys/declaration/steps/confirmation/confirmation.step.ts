@@ -1,4 +1,5 @@
 import {
+  access,
   Condition,
   Format,
   Params,
@@ -9,6 +10,7 @@ import {
 } from "@ministryofjustice/hmpps-forge/core/authoring";
 
 import { caption } from "#/journeys/declaration/declaration.blocks.js";
+import { declarationEffects } from "#/journeys/declaration/declaration.effects.js";
 import {
   confirmBody,
   confirmButtonGroup,
@@ -29,6 +31,11 @@ export const confirmStep = (): ReturnType<typeof step> =>
       confirmButtonGroup(),
     ],
     code: "declaration-confirm",
+    onAccess: [
+      access({
+        effects: [declarationEffects.loadApplication()],
+      }),
+    ],
     onSubmission: [
       submit({
         onAlways: {

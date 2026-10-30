@@ -13,6 +13,7 @@ import { editApplicationJourney } from "#/journeys/edit-application/editApplicat
 import { editApplicationTransformersRegistry } from "#/journeys/edit-application/editApplication.transformers.js";
 import { evidenceEffectsRegistry } from "#/journeys/evidence/evidence.effects.js";
 import { faker } from "@faker-js/faker";
+import { declarationEffectRegistry } from "#/journeys/declaration/declaration.effects.js";
 
 describe("Confirmation step", () => {
   const uuid = faker.string.uuid();
@@ -29,6 +30,7 @@ describe("Confirmation step", () => {
       additionalFunctions: [
         editApplicationTransformersRegistry,
         evidenceEffectsRegistry,
+        declarationEffectRegistry
       ],
       dependencies: {
         getApplication: getApplicationStub,

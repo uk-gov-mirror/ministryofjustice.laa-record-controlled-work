@@ -1,6 +1,11 @@
 import type { BlockDefinition } from "@ministryofjustice/hmpps-forge/core/components";
 
 import {
+  Data,
+  Format,
+  Transformer,
+} from "@ministryofjustice/hmpps-forge/core/authoring";
+import {
   GovUKBody,
   GovUKButton,
   GovUKButtonGroup,
@@ -8,6 +13,10 @@ import {
   GovUKWarningText,
 } from "@ministryofjustice/hmpps-forge/govuk-components";
 
+import {
+  CLIENT_DETAILS_DATA_KEYS,
+  CONTEXT_DATA_KEYS,
+} from "#/journeys/journey.constants.js";
 import { H1 } from "#/lib/constants/headings.js";
 import { i18next, t } from "#/lib/i18n.js";
 
@@ -38,10 +47,30 @@ export const confirmHeading = (): BlockDefinition =>
     text: t("journeys.declaration.confirm.title"),
   });
 
+const firstName = Data(CONTEXT_DATA_KEYS.application)
+  .path(CLIENT_DETAILS_DATA_KEYS.firstName)
+  .pipe(Transformer.String.EscapeHtml());
+
+const lastName = Data(CONTEXT_DATA_KEYS.application)
+  .path(CLIENT_DETAILS_DATA_KEYS.lastName)
+  .pipe(Transformer.String.EscapeHtml());
+
+export const clientName = Format("%1 %2", firstName, lastName);
+
+const declarationListHtml = textListHtml(
+  "journeys.declaration.confirm.declarationList",
+  "govuk-list govuk-list--bullet govuk-!-margin-bottom-6",
+);
+
 export const confirmBody = (): BlockDefinition =>
   GovUKBody({
     classes: "govuk-body",
-    text: `Joe Bloggs ${t("journeys.declaration.confirm.declarationText")}<br>${textListHtml("journeys.declaration.confirm.declarationList", "govuk-list govuk-list--bullet govuk-!-margin-bottom-6")}`,
+    text: Format(
+      "%1 %2<br>%3",
+      clientName,
+      t("journeys.declaration.confirm.declarationText"),
+      declarationListHtml,
+    ),
   });
 
 export const confirmWarning = (): BlockDefinition =>
