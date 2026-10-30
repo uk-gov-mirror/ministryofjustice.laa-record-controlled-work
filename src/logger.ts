@@ -3,6 +3,8 @@
 import * as Sentry from "@sentry/node";
 import pino, { type DestinationStream, type Logger } from "pino";
 
+import { getCorrelationId } from "#/lib/requestContext.js";
+
 export interface LogContext {
   applicationId?: string;
   correlationId?: string;
@@ -11,6 +13,7 @@ export interface LogContext {
 
 export interface LogFields extends Record<string, unknown> {
   applicationId?: string;
+  correlationId?: string;
   dependency?: string;
   durationMs?: number;
   operation?: string;
@@ -55,41 +58,58 @@ export class AppLogger {
 
   // creates a context-bound child logger
   child(context: LogContext): AppLogger {
-    return new AppLogger(this.logger.child(context), {
+    return new AppLogger(this.logger.child(pinoBindings(context)), {
       ...this.context,
       ...context,
     });
   }
 
   debug(message: string, fields: LogFields = {}): void {
-    this.logger.debug(fields, message);
-    Sentry.logger.debug(message, this.sentryAttributes(fields));
+    const resolvedFields = this.resolveFields(fields);
+    this.logger.debug(resolvedFields, message);
+    Sentry.logger.debug(message, this.sentryAttributes(resolvedFields));
   }
   error(message: string, error?: unknown, fields: LogFields = {}): void {
-    this.logger.error({ ...fields, err: error }, message);
+    const resolvedFields = this.resolveFields(fields);
+    this.logger.error({ ...resolvedFields, err: error }, message);
     this.sendErrorToSentry(
       message,
       error,
-      fields,
+      resolvedFields,
       Sentry.logger.error.bind(Sentry.logger),
     );
   }
   fatal(message: string, error: unknown, fields: LogFields = {}): void {
-    this.logger.fatal({ ...fields, err: error }, message);
+    const resolvedFields = this.resolveFields(fields);
+    this.logger.fatal({ ...resolvedFields, err: error }, message);
     this.sendErrorToSentry(
       message,
       error,
-      fields,
+      resolvedFields,
       Sentry.logger.fatal.bind(Sentry.logger),
     );
   }
   info(message: string, fields: LogFields = {}): void {
-    this.logger.info(fields, message);
-    Sentry.logger.info(message, this.sentryAttributes(fields));
+    const resolvedFields = this.resolveFields(fields);
+    this.logger.info(resolvedFields, message);
+    Sentry.logger.info(message, this.sentryAttributes(resolvedFields));
   }
   warn(message: string, fields: LogFields = {}): void {
-    this.logger.warn(fields, message);
-    Sentry.logger.warn(message, this.sentryAttributes(fields));
+    const resolvedFields = this.resolveFields(fields);
+    this.logger.warn(resolvedFields, message);
+    Sentry.logger.warn(message, this.sentryAttributes(resolvedFields));
+  }
+
+  // This resolves the correlation ID for each log entry, ensuring it is always accurate
+  // even if the context changes between log calls.
+  private resolveFields(fields: LogFields): LogFields {
+    return {
+      ...fields,
+      correlationId:
+        getCorrelationId() ??
+        fields.correlationId ??
+        this.context.correlationId,
+    };
   }
 
   private sendErrorToSentry(
@@ -135,9 +155,16 @@ export function createLogger(
         timestamp,
       },
       destination,
-    ).child(context),
+    ).child(pinoBindings(context)),
     context,
   );
+}
+
+// pinoBindings prevents a fixed correlation ID being baked into Pino;
+function pinoBindings(context: LogContext): LogContext {
+  const bindings = { ...context };
+  delete bindings.correlationId;
+  return bindings;
 }
 
 function redactSensitiveFields(value: unknown): Record<string, unknown>;

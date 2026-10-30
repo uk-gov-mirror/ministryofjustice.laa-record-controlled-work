@@ -5,6 +5,28 @@
 ## Template
 
 This repo was generated from [laa-express-typescript-template](https://ministryofjustice.github.io/laa-express-typescript-template/)
+
+## Application logging
+
+Use the shared `logger` from [src/logger.ts](src/logger.ts). Its `debug`, `info`,
+`warn`, `error` and `fatal` methods automatically attach the current request's
+`correlationId` to Pino output, Sentry log attributes and captured exception extras.
+No request-specific logger needs to be passed through application code.
+
+The correlation middleware validates or generates the ID. The request logger
+middleware must run immediately afterward: it establishes an `AsyncLocalStorage`
+context around downstream middleware and handlers.
+Only the correlation ID is stored; request objects and session data are not.
+
+The active async-context ID takes precedence over explicit log fields and child
+logger bindings. Outside that context, explicit fields take precedence over child
+bindings; if neither supplies an ID, Pino omits `correlationId`. No ID is generated
+by the logger. Promises and timers created within the context inherit it, including
+work that outlives the response. Workers and queued jobs need explicit propagation.
+
+This automatic enrichment applies to the application logger only, not Morgan,
+direct console/SDK logs or outgoing API headers.
+
 ## Get Started
 ### Prerequisites
 

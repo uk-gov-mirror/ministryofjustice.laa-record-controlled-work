@@ -1,15 +1,14 @@
 import type { NextFunction, Request, RequestHandler, Response } from "express";
 
-import { logger } from "#/logger.js";
+import { runWithRequestContext } from "#/lib/requestContext.js";
 
 /**
- * Attaches a request-scoped child logger to `req.log` carrying the correlation ID.
+ * Establishes async correlation context for downstream logging.
  * Must run after the correlationId middleware.
  * @returns {RequestHandler} The requestLogger middleware function.
  */
 export function requestLogger(): RequestHandler {
   return (req: Request, _res: Response, next: NextFunction): void => {
-    req.log = logger.child({ correlationId: req.correlationId });
-    next();
+    runWithRequestContext({ correlationId: req.correlationId }, next);
   };
 }

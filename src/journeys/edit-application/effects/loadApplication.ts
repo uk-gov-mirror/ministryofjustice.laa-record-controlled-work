@@ -28,6 +28,7 @@ export const loadApplication =
       const correlationId = context
         .getRequestHeader("x-correlation-id")
         ?.toString();
+
       if (!applicationID) {
         logger.error("applicationID parameter is missing");
         throw new Error("applicationID parameter is required");

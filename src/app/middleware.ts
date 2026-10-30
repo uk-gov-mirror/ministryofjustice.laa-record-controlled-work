@@ -45,7 +45,7 @@ export async function initMiddleware(
   // Resolve the correlation ID first so every later log and API call carries it.
   app.use(correlationId());
 
-  // Request-scoped logger (`req.log`) tagged with the correlation ID.
+  // Async correlation context for shared loggers.
   app.use(requestLogger());
 
   // Parse cookies and adds them to `req.cookies`.

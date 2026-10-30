@@ -1,7 +1,6 @@
 import type session from "express-session";
 
 import type { AuthFlowStore } from "#/auth/authCodeFlow/store.types.js";
-import type { AppLogger } from "#/logger.js";
 
 export interface ExpressLocaleLoader {
   t: (key: string, options?: Record<string, unknown>) => string;
@@ -13,7 +12,6 @@ declare global {
       accessToken?: string;
       correlationId: string;
       locale: ExpressLocaleLoader;
-      log: AppLogger;
       session: Partial<session.SessionData> & session.Session;
       user?: AccountInfo;
     }
