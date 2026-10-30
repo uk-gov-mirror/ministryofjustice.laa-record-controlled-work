@@ -45,7 +45,7 @@
 {{- range $policy := .policies }}
 {{- if and (or (not (hasKey $policy "enabled")) $policy.enabled) (has "Egress" $policy.policyTypes) }}
 ---
-apiVersion: projectcalico.org/v3
+apiVersion: crd.projectcalico.org/v1
 kind: NetworkPolicy
 metadata:
   name: {{ include "laa-record-controlled-work.fullname" $root }}-{{ $policy.name }}
