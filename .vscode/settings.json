@@ -8,15 +8,19 @@
   },
   // force eslint formatting
   "editor.formatOnSave": false,
+  "eslint.format.enable": true,
   "[typescript]": {
-    "editor.formatOnSave": false
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+    "editor.formatOnSave": true
   },
   "[javascript]": {
-    "editor.formatOnSave": false
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+    "editor.formatOnSave": true
   },
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit",
-    "source.organizeImports": "never"
+    "source.organizeImports": "never",
+    "source.removeUnusedImports": "explicit"
   },
   "chat.tools.terminal.autoApprove": {
     "docker compose": true

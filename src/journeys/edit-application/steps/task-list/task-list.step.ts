@@ -44,10 +44,7 @@ export const taskListStep = (): ReturnType<typeof step> =>
     ],
     onAccess: [
       access({
-        effects: [
-          editApplicationEffects.loadApplication(),
-          editApplicationEffects.setTaskListStatuses(),
-        ],
+        effects: [editApplicationEffects.setTaskListStatuses()],
       }),
     ],
     onSubmission: [saveAndReturn(), submitApplication(), closeApplication()],
